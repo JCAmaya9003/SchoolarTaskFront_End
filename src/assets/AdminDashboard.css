@@ -1,0 +1,55 @@
+/* General styles for the admin dashboard */
+.admin-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    margin: 0 auto;
+    max-width: 1200px;
+  }
+  
+  /* Layout for desktop and tablets */
+  @media (min-width: 768px) {
+    .admin-dashboard {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+  }
+  
+  /* Styles for each form container */
+  .admin-dashboard .form-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-color: #f9f9f9;
+    margin: 10px;
+    max-width: 300px;
+  }
+  
+  .admin-dashboard .form-container h2 {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 15px;
+  }
+  
+  .admin-dashboard .form-container form {
+    width: 100%;
+  }
+  
+  /* Mobile-specific adjustments */
+  @media (max-width: 768px) {
+    .admin-dashboard {
+      flex-direction: column;
+    }
+  
+    .admin-dashboard .form-container {
+      max-width: 100%;
+    }
+  }
+  
