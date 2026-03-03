@@ -6,9 +6,9 @@
 .show-news-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  gap: var(--space-7);
 }
 
 @media (max-width: 640px) {
-  .show-news-grid { grid-template-columns: 1fr; gap: 12px; }
+  .show-news-grid { grid-template-columns: 1fr; gap: var(--space-5); }
 }

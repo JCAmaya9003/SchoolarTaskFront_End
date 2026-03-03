@@ -4,15 +4,15 @@
    Classes prefixed with .apanel- for clarity.
    ============================================================ */
 
-/* ── Page wrapper — single column, stacked ──────────────────── */
+/* ── Page wrapper ───────────────────────────────────────────── */
 .apanel {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-9);
   width: 100%;
 }
 
-/* Force form child divs to full width of their containers */
+/* Force inputs to fill their containers */
 .apanel-form-card form > div,
 .apanel-row > div {
   width: 100%;
@@ -25,32 +25,31 @@
   box-sizing: border-box;
 }
 
-
 /* ── Shared card style ──────────────────────────────────────── */
 .apanel-form-card,
 .apanel-list-card {
-  background: #fff;
-  border: 1px solid #E2E8F0;
-  border-radius: 12px;
-  padding: 22px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-10);
   overflow: hidden;
 }
 
 /* ── Card titles ─────────────────────────────────────────────── */
 .apanel-form-title,
 .apanel-list-title {
-  font-size: 15px;
+  font-size: var(--text-lg);
   font-weight: 700;
-  color: #1E3A5F;
-  margin-bottom: 18px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #F1F5F9;
+  color: var(--color-text-heading);
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-surface-alt);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
 }
 
-/* Count badge on list title */
+/* Count badge */
 .apanel-count {
   margin-left: auto;
   display: inline-flex;
@@ -59,22 +58,21 @@
   min-width: 22px;
   height: 22px;
   padding: 0 7px;
-  background: #EFF6FF;
-  color: #1D4ED8;
-  border-radius: 99px;
-  font-size: 11px;
+  background: var(--color-info-bg);
+  color: var(--color-info-text);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
   font-weight: 700;
 }
 
 /* ── Form layout inside the card ────────────────────────────── */
-/* Override global form {} card styles — the card IS the wrapper */
 .apanel-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--space-6);
 }
 
-/* FormInput component renders label + input; override card */
+/* Override global form card style */
 .apanel-form form,
 .apanel-form-card form {
   max-width: none;
@@ -85,10 +83,10 @@
   background: none;
 }
 
-/* Row of two inputs side-by-side */
+/* Side-by-side row */
 .apanel-row {
   display: flex;
-  gap: 12px;
+  gap: var(--space-5);
 }
 .apanel-row > * { flex: 1; }
 
@@ -96,27 +94,27 @@
 .apanel-field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-3);
 }
 
-/* Label (separate from FormInput's label) */
+/* Label */
 .apanel-label {
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 600;
-  letter-spacing: .07em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: #475569;
+  color: var(--color-text-muted);
 }
 
 /* Checkbox grid */
 .apanel-checkboxes {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 6px;
-  padding: 10px;
-  background: #F8FAFC;
-  border: 1.5px solid #E2E8F0;
-  border-radius: 7px;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--color-surface-alt);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
   max-height: 180px;
   overflow-y: auto;
 }
@@ -124,8 +122,8 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 13px;
-  color: #334155;
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
   cursor: pointer;
   padding: 3px 0;
 }
@@ -133,13 +131,13 @@
   width: 14px;
   height: 14px;
   cursor: pointer;
-  accent-color: #1E3A5F;
+  accent-color: var(--color-primary);
 }
 
 /* Form actions row */
 .apanel-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--space-3);
   flex-wrap: wrap;
   margin-top: 2px;
 }
@@ -149,54 +147,55 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .apanel-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 10px 13px;
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
-  border-radius: 7px;
-  transition: background .14s, border-color .14s;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
 }
-.apanel-item:hover { background: #F1F5F9; border-color: #CBD5E1; }
+.apanel-item:hover { background: var(--color-surface-hover); border-color: var(--color-border-strong); }
 
 .apanel-item-main {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
   flex: 1;
   overflow: hidden;
   flex-wrap: wrap;
 }
 
-/* Grade badge (e.g. "Grade 5") */
+/* Grade badge */
 .apanel-item-badge {
   flex-shrink: 0;
   display: inline-block;
-  padding: 2px 8px;
-  background: #FFFBEB;
-  color: #92400E;
-  border: 1px solid #FDE68A;
-  border-radius: 99px;
-  font-size: 11px;
+  padding: 2px var(--space-3);
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
   font-weight: 700;
 }
 
 .apanel-item-name {
   font-weight: 600;
-  font-size: 13px;
-  color: #1E293B;
+  font-size: var(--text-base);
+  color: var(--color-text);
 }
 
-/* Subjects / extra info */
 .apanel-item-sub {
-  font-size: 12px;
-  color: #64748B;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -210,24 +209,24 @@
 
 /* ── States ─────────────────────────────────────────────────── */
 .apanel-loading {
-  font-size: 13px;
-  color: #94A3B8;
+  font-size: var(--text-base);
+  color: var(--color-text-faint);
   font-style: italic;
-  padding: 8px 0;
+  padding: var(--space-3) 0;
 }
 .apanel-empty {
-  font-size: 13px;
-  color: #94A3B8;
+  font-size: var(--text-base);
+  color: var(--color-text-faint);
   font-style: italic;
   text-align: center;
-  padding: 20px 0;
+  padding: var(--space-9) 0;
 }
 .apanel-error {
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 500;
-  color: #B91C1C;
-  background: #FEF2F2;
-  border-left: 3px solid #DC2626;
-  border-radius: 0 5px 5px 0;
+  color: var(--color-danger-text);
+  background: var(--color-danger-bg);
+  border-left: 3px solid var(--color-danger);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   padding: 7px 11px;
 }

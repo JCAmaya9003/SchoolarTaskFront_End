@@ -1,103 +1,111 @@
 /* ============================================================
    home.css
-   KEY: .container uses height:100vh directly.
-   This bypasses all React Router / AuthProvider / etc. wrappers
-   that otherwise break the height:100% chain.
+   App shell: .container > .header + .content
+   KEY: .container uses height:100vh directly — no CSS chain
+   dependency on React wrappers.
    ============================================================ */
 
 /* ── App shell ──────────────────────────────────────────────── */
 .container {
   display: flex;
   flex-direction: column;
-  height: 100vh;       /* direct viewport reference — no chain dependency */
-  overflow: hidden;    /* clip overflow at the shell level */
-  background: #F1F5F9;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--color-bg);
 }
 
-/* ── Header — exactly 56px, no flex resizing ────────────────── */
+/* ── Topbar — exactly 56px, never resizes ───────────────────── */
 .header {
-  flex: 0 0 56px;
+  flex: 0 0 var(--topbar-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
-  background: #1E3A5F;
-  box-shadow: 0 1px 0 rgba(0,0,0,.2), 0 2px 8px rgba(0,0,0,.15);
-  z-index: 50;
+  padding: 0 var(--space-9);
+  background: var(--color-primary);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: var(--z-topbar);
   overflow: hidden;
 }
 
+/* Institutional name / logo */
 .school-name {
-  font-size: 16px;
+  font-size: var(--text-xl);
   font-weight: 700;
   color: #fff;
   white-space: nowrap;
   flex-shrink: 0;
-  letter-spacing: -.1px;
+  letter-spacing: -0.1px;
 }
 
-/* ── Navigation ─────────────────────────────────────────────── */
+/* ── Navigation links ───────────────────────────────────────── */
 .nav {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--space-1);
   flex: 1;
   justify-content: flex-end;
-  padding-right: 12px;
+  padding-right: var(--space-5);
   overflow: hidden;
 }
 
 .nav a {
   display: inline-block;
-  padding: 5px 10px;
-  border-radius: 6px;
-  font-size: 13px;
+  padding: 5px var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
   font-weight: 500;
-  color: rgba(255,255,255,.65);
-  text-decoration: none;
+  color: rgba(255, 255, 255, 0.65);
   white-space: nowrap;
-  transition: background .15s, color .15s;
+  transition: background var(--transition-base), color var(--transition-base);
 }
-.nav a:hover        { background: rgba(255,255,255,.1); color: #fff; }
-.nav a[aria-current="page"] { background: rgba(255,255,255,.16); color: #fff; font-weight: 600; }
+.nav a:hover                        { background: rgba(255, 255, 255, 0.10); color: #fff; }
+.nav a[aria-current="page"]         { background: rgba(255, 255, 255, 0.16); color: #fff; font-weight: 600; }
 
-/* Role accents */
+/* ── Role accent colors ─────────────────────────────────────── */
 .nav a[data-role="admin"]                       { color: #FCD34D; }
 .nav a[data-role="admin"]:hover,
-.nav a[data-role="admin"][aria-current="page"]  { color: #F59E0B; background: rgba(245,158,11,.15); }
+.nav a[data-role="admin"][aria-current="page"]  { color: var(--color-accent); background: rgba(245, 158, 11, 0.15); }
 
 .nav a[data-role="teacher"]                      { color: #6EE7B7; }
 .nav a[data-role="teacher"]:hover,
-.nav a[data-role="teacher"][aria-current="page"] { color: #10B981; background: rgba(16,185,129,.15); }
+.nav a[data-role="teacher"][aria-current="page"] { color: var(--color-success); background: rgba(16, 185, 129, 0.15); }
 
 .nav a[data-role="student"]                      { color: #BAE6FD; }
 .nav a[data-role="student"]:hover,
-.nav a[data-role="student"][aria-current="page"] { color: #0EA5E9; background: rgba(14,165,233,.15); }
+.nav a[data-role="student"][aria-current="page"] { color: var(--color-info); background: rgba(14, 165, 233, 0.15); }
 
 .nav a[data-role="parent"]                       { color: #DDD6FE; }
 .nav a[data-role="parent"]:hover,
-.nav a[data-role="parent"][aria-current="page"]  { color: #8B5CF6; background: rgba(139,92,246,.15); }
+.nav a[data-role="parent"][aria-current="page"]  { color: #8B5CF6; background: rgba(139, 92, 246, 0.15); }
 
-/* ── Logout ─────────────────────────────────────────────────── */
+/* ── Logout button ──────────────────────────────────────────── */
 .logout-button {
   flex-shrink: 0;
   height: 30px;
-  padding: 0 12px;
+  padding: 0 var(--space-5);
   background: transparent;
-  border: 1px solid rgba(255,255,255,.3);
-  border-radius: 6px;
-  color: rgba(255,255,255,.75);
-  font-size: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  border-radius: var(--radius-md);
+  color: rgba(255, 255, 255, 0.75);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
-  transition: background .15s, color .15s, border-color .15s;
+  transition:
+    background var(--transition-base),
+    color var(--transition-base),
+    border-color var(--transition-base);
 }
-.logout-button:hover { background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.5); }
+.logout-button:hover {
+  background: rgba(255, 255, 255, 0.10);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.50);
+}
 
 .mobile-logout  { display: none; }
 .desktop-logout { display: inline-flex; align-items: center; }
 
-/* ── Hamburger ──────────────────────────────────────────────── */
+/* ── Hamburger — mobile only ────────────────────────────────── */
 .hamburger {
   display: none;
   flex-direction: column;
@@ -116,61 +124,63 @@
   width: 20px;
   height: 2px;
   border-radius: 2px;
-  background: rgba(255,255,255,.85);
+  background: rgba(255, 255, 255, 0.85);
   transform-origin: center;
-  transition: transform .2s, opacity .2s;
+  transition: transform var(--transition-medium), opacity var(--transition-medium);
 }
 .hamburger.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
 .hamburger.active span:nth-child(2) { opacity: 0; }
 .hamburger.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-/* ── Main scrollable content ────────────────────────────────── */
+/* ── Main scrollable content area ──────────────────────────── */
 .content {
   flex: 1 1 0;
-  min-height: 0;      /* critical: allows flex child to shrink + scroll */
+  min-height: 0;       /* critical: allows flex child to shrink + scroll */
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 24px 28px;
+  padding: var(--space-11) var(--space-12);
 }
 
-/* Section headings (rendered by renderContent) */
+/* Section headings rendered by renderContent */
 .content > div > h2 {
-  font-size: 20px;
+  font-size: var(--text-2xl);
   font-weight: 700;
-  color: #1E3A5F;
-  margin: 0 0 18px;
+  color: var(--color-text-heading);
+  margin: 0 0 var(--space-8);
 }
 
-/* ── Responsive ─────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════════════════ */
 @media (max-width: 900px) {
-  .header  { padding: 0 14px; }
-  .content { padding: 18px 16px; }
+  .header  { padding: 0 var(--space-6); }
+  .content { padding: var(--space-8) var(--space-7); }
 }
 
 @media (max-width: 640px) {
   .hamburger      { display: flex; }
   .desktop-logout { display: none; }
-  .mobile-logout  { display: block; margin-top: 16px; }
+  .mobile-logout  { display: block; margin-top: var(--space-7); }
 
-  /* Slide-in nav drawer */
+  /* Slide-in full-screen nav drawer */
   .nav {
     position: fixed;
     inset: 0;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-2);
     padding-right: 0;
-    background: #1E3A5F;
+    background: var(--color-primary);
     transform: translateX(-100%);
-    transition: transform .24s cubic-bezier(.4,0,.2,1);
-    z-index: 200;
+    transition: transform var(--transition-spring);
+    z-index: var(--z-modal);
     overflow: visible;
     flex: none;
   }
   .nav.active { transform: translateX(0); }
-  .nav a { font-size: 16px; padding: 10px 28px; }
+  .nav a { font-size: var(--text-xl); padding: var(--space-4) var(--space-12); }
 
-  .content { padding: 14px 12px; }
-  .content > div > h2 { font-size: 18px; }
+  .content { padding: var(--space-6) var(--space-5); }
+  .content > div > h2 { font-size: var(--text-2xl); }
 }

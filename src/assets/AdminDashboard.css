@@ -13,26 +13,27 @@
 .admin-tabs {
   display: flex;
   gap: 0;
-  border-bottom: 2px solid #E2E8F0;
-  margin-bottom: 20px;
+  border-bottom: 2px solid var(--color-border);
+  margin-bottom: var(--space-9);
 }
 
 .admin-tab {
-  padding: 10px 22px;
+  padding: var(--space-4) var(--space-10);
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
   margin-bottom: -2px;
-  font-size: 14px;
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
   font-weight: 500;
-  color: #64748B;
+  color: var(--color-text-muted);
   cursor: pointer;
-  transition: color .15s, border-color .15s;
+  transition: color var(--transition-base), border-color var(--transition-base);
 }
-.admin-tab:hover { color: #1E3A5F; }
+.admin-tab:hover { color: var(--color-primary); }
 .admin-tab--active {
   font-weight: 700;
-  /* color and border-bottom-color set inline via style prop */
+  /* color and border-bottom-color are set inline via style prop in JSX */
 }
 
 /* ── Panel (full width) ──────────────────────────────────────── */

@@ -1,5 +1,5 @@
 /* ============================================================
-   News.css — For both News.jsx (admin) and ShowNews.jsx (public)
+   News.css — For News.jsx (admin) and ShowNews.jsx (public)
    Classes: .news-page, .news-form-card, .news-grid, .news-card,
             .news-card-body, .news-card-title, .news-card-content,
             .news-card-author, .news-card-actions
@@ -9,7 +9,7 @@
 .news-page {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-9);
   width: 100%;
 }
 
@@ -23,23 +23,22 @@
   min-width: 0;
 }
 
-
-/* ── Create/Edit form card ──────────────────────────────────── */
+/* ── Create / Edit form card ────────────────────────────────── */
 .news-form-card {
-  background: #fff;
-  border: 1px solid #E2E8F0;
-  border-radius: 12px;
-  padding: 22px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-10);
 }
 .news-form-title {
-  font-size: 15px;
+  font-size: var(--text-lg);
   font-weight: 700;
-  color: #1E3A5F;
-  margin-bottom: 18px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #F1F5F9;
+  color: var(--color-text-heading);
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-surface-alt);
 }
-/* Override global form card look inside the panel */
+/* Override global form card inside the panel */
 .news-form-card form {
   max-width: none;
   padding: 0;
@@ -50,44 +49,47 @@
 }
 
 /* ── News grid ──────────────────────────────────────────────── */
-.news-container {
-  padding: 0;
-}
+.news-container { padding: 0; }
 .news-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 14px;
+  gap: var(--space-6);
+}
+@media (max-width: 640px) {
+  .news-grid { grid-template-columns: 1fr; }
 }
 
 /* ── News card ──────────────────────────────────────────────── */
 .news-card {
-  background: #fff;
-  border: 1px solid #E2E8F0;
-  border-left: 3px solid #1E3A5F;
-  border-radius: 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-primary);
+  border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: box-shadow .16s, transform .16s;
+  transition:
+    box-shadow var(--transition-medium),
+    transform var(--transition-medium);
 }
 .news-card:hover {
-  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+  box-shadow: var(--shadow-lg);
   transform: translateY(-2px);
 }
 
 .news-card-body {
   flex: 1;
-  padding: 16px 18px;
+  padding: var(--space-7) var(--space-8);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-3);
 }
 
 .news-card-title {
-  font-size: 15px;
+  font-size: var(--text-lg);
   font-weight: 700;
-  color: #1E3A5F;
-  line-height: 1.3;
+  color: var(--color-text-heading);
+  line-height: var(--leading-snug);
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -98,9 +100,9 @@
 }
 
 .news-card-content {
-  font-size: 13px;
-  color: #64748B;
-  line-height: 1.6;
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  line-height: var(--leading-relaxed);
   margin: 0;
   white-space: pre-wrap;
   overflow: hidden;
@@ -112,39 +114,40 @@
 }
 
 .news-card-author {
-  font-size: 11px;
-  color: #94A3B8;
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
   margin: 0;
   font-style: italic;
 }
 
 .news-card-actions {
   display: flex;
-  gap: 6px;
-  padding: 10px 18px;
-  border-top: 1px solid #F1F5F9;
-  background: #FAFAFA;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-8);
+  border-top: 1px solid var(--color-surface-alt);
+  background: #FAFBFC;
 }
 
-/* ShowNews.jsx public view — no actions, just the grid */
+/* Public view card (ShowNews) */
 .scroll-wrapper { width: 100%; }
 .news-item {
-  /* same as .news-card for public view */
-  background: #fff;
-  border: 1px solid #E2E8F0;
-  border-radius: 10px;
-  padding: 18px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  transition: box-shadow .16s, transform .16s;
+  gap: var(--space-3);
+  transition:
+    box-shadow var(--transition-medium),
+    transform var(--transition-medium);
   overflow: hidden;
 }
-.news-item:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); transform: translateY(-2px); }
+.news-item:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
 .news-item h2 {
-  font-size: 16px;
+  font-size: var(--text-xl);
   font-weight: 700;
-  color: #1E3A5F;
+  color: var(--color-text-heading);
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -154,8 +157,8 @@
   -webkit-box-orient: vertical;
 }
 .news-item p {
-  font-size: 13px;
-  color: #64748B;
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -163,10 +166,6 @@
   -webkit-line-clamp: 5;
   line-clamp: 5;
   -webkit-box-orient: vertical;
-}
-
-@media (max-width: 640px) {
-  .news-grid { grid-template-columns: 1fr; }
 }
 
 /* ── Clickable card hint ─────────────────────────────────────── */
@@ -177,15 +176,15 @@
 .news-detail-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(15, 23, 42, 0.60);
   backdrop-filter: blur(4px);
-  z-index: 9999;
+  z-index: var(--z-modal);
   display: flex;
   align-items: flex-start;
   justify-content: center;
   padding: 40px 16px;
   overflow-y: auto;
-  animation: nd-fade-in .18s ease;
+  animation: nd-fade-in 0.18s ease;
 }
 @keyframes nd-fade-in {
   from { opacity: 0; }
@@ -193,14 +192,14 @@
 }
 
 .news-detail-modal {
-  background: #fff;
-  border-radius: 16px;
+  background: var(--color-surface);
+  border-radius: var(--radius-2xl);
   width: 100%;
   max-width: 760px;
   min-height: 200px;
   padding: 0;
-  box-shadow: 0 24px 64px rgba(0,0,0,.2);
-  animation: nd-slide-in .2s cubic-bezier(.16,1,.3,1);
+  box-shadow: var(--shadow-xl);
+  animation: nd-slide-in 0.20s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
 }
 @keyframes nd-slide-in {
@@ -212,48 +211,49 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 28px;
-  border-bottom: 1px solid #F1F5F9;
+  padding: var(--space-7) 28px;
+  border-bottom: 1px solid var(--color-surface-alt);
   background: #FAFBFC;
 }
 
 .news-detail-back {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 13px;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
   font-weight: 600;
-  color: #1E3A5F;
+  color: var(--color-primary);
   padding: 0;
-  transition: color .15s;
+  transition: color var(--transition-base);
 }
-.news-detail-back:hover { color: #F59E0B; }
+.news-detail-back:hover { color: var(--color-accent); }
 
 .news-detail-byline {
-  font-size: 12px;
-  color: #94A3B8;
+  font-size: var(--text-sm);
+  color: var(--color-text-faint);
   margin: 0;
   font-style: italic;
 }
 
 .news-detail-title {
-  font-size: 22px;
+  font-size: var(--text-3xl);
   font-weight: 700;
-  color: #1E3A5F;
-  line-height: 1.3;
+  color: var(--color-text-heading);
+  line-height: var(--leading-snug);
   margin: 0;
-  padding: 28px 28px 16px;
-  border-bottom: 1px solid #F1F5F9;
+  padding: 28px 28px var(--space-7);
+  border-bottom: 1px solid var(--color-surface-alt);
 }
 
 .news-detail-content {
-  font-size: 15px;
-  color: #334155;
-  line-height: 1.85;
+  font-size: var(--text-lg);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-loose);
   margin: 0;
-  padding: 24px 28px 36px;
+  padding: var(--space-11) 28px 36px;
   white-space: pre-wrap;
 }
