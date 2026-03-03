@@ -1,4 +1,11 @@
+/**
+ * Config Utils
+ * 
+ * Backward compatibility layer for existing code.
+ * Imports configuration from appConfig.js
+ */
+import { APP_CONFIG } from '../config/appConfig';
 export const config = {
-  backUrl: import.meta.env.VITE_BASE_URL,
-  googleClientId: import.meta.env.VITE_CLIENT_ID,
+  backUrl: APP_CONFIG.BACKEND_URL,
+  googleClientId: APP_CONFIG.GOOGLE_CLIENT_ID,
 };

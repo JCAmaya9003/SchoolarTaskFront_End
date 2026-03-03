@@ -1,0 +1,313 @@
+/* ============================================================
+   UserPanel.css
+   Used by StudentAdmin, TeacherAdmin, ParentAdmin.
+   Layout: single column — form card (top) + user list (bottom).
+   Prefix: .upanel-
+   ============================================================ */
+
+/* ── Page wrapper ───────────────────────────────────────────── */
+.upanel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Form card ──────────────────────────────────────────────── */
+.upanel-form-card {
+  background: #fff;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 22px 24px;
+}
+
+.upanel-form-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1E3A5F;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+/* Override the global form {} card inside this card */
+.upanel-form-card form {
+  max-width: none;
+  width: 100%;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: none;
+  gap: 10px;
+}
+
+/* Force every field wrapper (FormInput div, select wrapper, etc.)
+   to take the full width of its grid cell */
+.upanel-form-card form > div,
+.upanel-row > div {
+  width: 100%;
+  min-width: 0; /* prevents grid blowout */
+}
+
+/* Inputs and selects fill their wrapper */
+.upanel-form-card form input,
+.upanel-form-card form select,
+.upanel-form-card form textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+
+/* Spacing between each row/field inside the form */
+.upanel-form-card form > *,
+.upanel-form-card .upanel-row,
+.upanel-form-card .upanel-section-label,
+.upanel-form-card .upanel-assignment-card,
+.upanel-form-card .upanel-actions,
+.upanel-form-card .upanel-field,
+.upanel-form-card .upanel-notice {
+  margin-bottom: 16px;
+}
+.upanel-form-card form > *:last-child { margin-bottom: 0; }
+
+
+
+/* Two-column field row for side-by-side inputs */
+.upanel-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 640px) { .upanel-row { grid-template-columns: 1fr; } }
+
+/* Three-column row */
+.upanel-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 640px) { .upanel-row-3 { grid-template-columns: 1fr; } }
+
+/* ── Assignment cards (TeacherAdmin) ────────────────────────── */
+.upanel-assignment-card {
+  border: 1px solid #E2E8F0;
+  border-left: 3px solid #D97706;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  background: #FFFBEB;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.upanel-assignment-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.upanel-assignment-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #92400E;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+/* Generic field wrapper */
+.upanel-field { display: flex; flex-direction: column; gap: 5px; }
+.upanel-label { font-size: 12px; font-weight: 600; color: #475569; }
+
+
+/* Section separator within form */
+.upanel-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #94A3B8;
+  padding: 10px 0 6px;
+  border-top: 1px solid #F1F5F9;
+  margin-top: 4px;
+}
+
+/* Form action buttons row */
+.upanel-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+/* Warning notice (e.g. no parents) */
+.upanel-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 7px;
+  font-size: 12px;
+  color: #92400E;
+  font-weight: 500;
+}
+
+/* ── List card ──────────────────────────────────────────────── */
+.upanel-list-card {
+  background: #fff;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 22px 24px;
+  overflow: hidden;
+}
+
+.upanel-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #F1F5F9;
+}
+.upanel-list-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1E3A5F;
+}
+
+/* Count badge */
+.upanel-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.upanel-count-total {
+  font-weight: 400;
+  color: #94A3B8;
+  font-size: 10px;
+}
+
+/* ── Filter bar ─────────────────────────────────────────────── */
+.upanel-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 12px 0 16px;
+  border-bottom: 1px solid #F1F5F9;
+  margin-bottom: 12px;
+}
+
+.upanel-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.upanel-filter-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: #94A3B8;
+}
+
+.upanel-filter-select,
+.upanel-filter-input {
+  height: 32px;
+  padding: 0 10px;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #1E293B;
+  background: #F8FAFC;
+  transition: border-color .15s, box-shadow .15s;
+  min-width: 110px;
+}
+.upanel-filter-select:focus,
+.upanel-filter-input:focus {
+  outline: none;
+  border-color: #1E3A5F;
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(30,58,95,.08);
+}
+.upanel-filter-input { min-width: 130px; }
+
+.upanel-filter-clear {
+  align-self: flex-end;
+  margin-bottom: 0;
+}
+
+@media (max-width: 640px) {
+  .upanel-filters { gap: 8px; }
+  .upanel-filter-select,
+  .upanel-filter-input { min-width: 90px; }
+}
+
+
+/* ── User rows ──────────────────────────────────────────────── */
+.upanel-items {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.upanel-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  transition: background .14s, border-color .14s;
+}
+.upanel-item:hover { background: #F1F5F9; border-color: #CBD5E1; }
+
+.upanel-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.upanel-item-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1E293B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.upanel-item-email {
+  font-size: 11px;
+  color: #94A3B8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.upanel-item-detail {
+  font-size: 11px;
+  color: #64748B;
+}
+
+.upanel-item-actions {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+/* ── States ─────────────────────────────────────────────────── */
+.upanel-loading { font-size: 13px; color: #94A3B8; font-style: italic; padding: 8px 0; }
+.upanel-error   { font-size: 12px; font-weight: 500; color: #B91C1C; background: #FEF2F2; border-left: 3px solid #DC2626; border-radius: 0 5px 5px 0; padding: 7px 11px; }
+.upanel-empty   { font-size: 13px; color: #94A3B8; text-align: center; padding: 24px 0; font-style: italic; }

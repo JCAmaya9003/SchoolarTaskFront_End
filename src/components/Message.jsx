@@ -1,29 +1,35 @@
-import React from "react";
-import '../assets/News.css'; // Importing CSS
+/**
+ * Message Component — News Article Card (Admin view)
+ * Now clickable to open full-screen article detail.
+ */
+import "../assets/News.css";
 
-const Message = ({ message, onDelete, setEditingNews }) => {
-  const handleEditClick = () => {
-    // Set the editing state to pass the selected message to FormNews for editing
-    setEditingNews(message);
-  };
-
-  const handleDelete = () => {
-    onDelete(message.usuario.email, message.titulo); // Call delete handler
-  };
-
+const Message = ({ message, onDelete, setEditingNews, onOpenDetail }) => {
   return (
-    <div className="news-item">
-      <h2>{message.titulo}</h2>
-      <p>{message.contenido}</p>
-      <p>
-        Atte: {message.usuario.nombre} {message.usuario.apellido}
-      </p>
-      <div className="buttons">
-        <button className="edit-button" onClick={handleEditClick}>
-          Editar
+    <div className="news-card">
+      <div
+        className="news-card-body news-card-clickable"
+        onClick={() => onOpenDetail && onOpenDetail(message)}
+        title="Click to read full article"
+      >
+        <h3 className="news-card-title">{message.title}</h3>
+        <p className="news-card-content">{message.content}</p>
+        <p className="news-card-author">
+          By {message.user?.firstName} {message.user?.lastName}
+        </p>
+      </div>
+      <div className="news-card-actions">
+        <button
+          className="btn btn-info btn-sm"
+          onClick={() => setEditingNews(message)}
+        >
+          Edit
         </button>
-        <button className="delete-button" onClick={handleDelete}>
-          Eliminar
+        <button
+          className="btn btn-danger btn-sm"
+          onClick={() => onDelete(message.user?.email, message.title)}
+        >
+          Delete
         </button>
       </div>
     </div>

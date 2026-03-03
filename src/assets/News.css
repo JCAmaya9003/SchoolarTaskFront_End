@@ -1,153 +1,259 @@
-/* Basic layout for the news container */
+/* ============================================================
+   News.css — For both News.jsx (admin) and ShowNews.jsx (public)
+   Classes: .news-page, .news-form-card, .news-grid, .news-card,
+            .news-card-body, .news-card-title, .news-card-content,
+            .news-card-author, .news-card-actions
+   ============================================================ */
+
+/* ── Admin layout: stacked (form top, grid below) ───────────── */
+.news-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+/* Fix inputs overflowing inside the form card */
+.news-form-card form > div,
+.news-form-card form input,
+.news-form-card form select,
+.news-form-card form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+
+/* ── Create/Edit form card ──────────────────────────────────── */
+.news-form-card {
+  background: #fff;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 22px;
+}
+.news-form-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1E3A5F;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #F1F5F9;
+}
+/* Override global form card look inside the panel */
+.news-form-card form {
+  max-width: none;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: none;
+}
+
+/* ── News grid ──────────────────────────────────────────────── */
 .news-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-  }
-  
-  /* Layout for the news-editing form */
-  .news-editing {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    padding: 20px;
-  }
-  
-  /* Center and style the form */
-  .news-editing form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    max-width: 600px;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-  }
-  
-  /* Style for the input fields */
-  .news-editing form input,
-  .news-editing form textarea {
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 16px;
-  }
-  
-  /* Style for the submit button */
-  .news-editing form button {
-    padding: 10px 20px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-  }
-  
-  .news-editing form button:hover {
-    background-color: #45a049;
-  }
-  
-  /* Main container for news items */
-  .news-items {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 columns by default */
-    gap: 20px;
-    width: 100%;
-    max-width: 1200px;
-    margin-top: 20px;
-  }
-  
-  /* Style for each message box */
-  .message-box {
-    border: 1px solid #ccc;
-    padding: 15px;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  }
-  
-  .message-box h2 {
-    margin-bottom: 10px;
-  }
-  
-  .message-box p {
-    margin-bottom: 10px;
-  }
-  
-  .message-box button {
-    padding: 6px 12px;
-    margin: 5px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  .message-box button:hover {
-    background-color: #45a049;
-  }
-  
-  /* Mobile Styles: Use a single column layout for small screens */
-  @media (max-width: 768px) {
-    .news-items {
-      grid-template-columns: 1fr; /* 1 column for mobile */
-    }
-  }
-/* Center the news editing form */
-.news-editing {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    padding: 20px;
-  }
-  
-  /* Apply flexbox to center the form inside the container */
-  .news-editing form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    max-width: 600px; /* Set a max width for the form */
-    width: 100%;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-  }
-  
-  /* Add some margin and styling for form fields */
-  .news-editing form input,
-  .news-editing form textarea {
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 16px;
-  }
-  
-  /* Style for the submit button */
-  .news-editing form button {
-    padding: 10px 20px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-  }
-  
-  .news-editing form button:hover {
-    background-color: #45a049;
-  }
-    
+  padding: 0;
+}
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+/* ── News card ──────────────────────────────────────────────── */
+.news-card {
+  background: #fff;
+  border: 1px solid #E2E8F0;
+  border-left: 3px solid #1E3A5F;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: box-shadow .16s, transform .16s;
+}
+.news-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+  transform: translateY(-2px);
+}
+
+.news-card-body {
+  flex: 1;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.news-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1E3A5F;
+  line-height: 1.3;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.news-card-content {
+  font-size: 13px;
+  color: #64748B;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+
+.news-card-author {
+  font-size: 11px;
+  color: #94A3B8;
+  margin: 0;
+  font-style: italic;
+}
+
+.news-card-actions {
+  display: flex;
+  gap: 6px;
+  padding: 10px 18px;
+  border-top: 1px solid #F1F5F9;
+  background: #FAFAFA;
+}
+
+/* ShowNews.jsx public view — no actions, just the grid */
+.scroll-wrapper { width: 100%; }
+.news-item {
+  /* same as .news-card for public view */
+  background: #fff;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: box-shadow .16s, transform .16s;
+  overflow: hidden;
+}
+.news-item:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); transform: translateY(-2px); }
+.news-item h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1E3A5F;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.news-item p {
+  font-size: 13px;
+  color: #64748B;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  -webkit-box-orient: vertical;
+}
+
+@media (max-width: 640px) {
+  .news-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Clickable card hint ─────────────────────────────────────── */
+.news-card-clickable { cursor: pointer; }
+.news-card-clickable:hover .news-card-title { text-decoration: underline; }
+
+/* ── Article detail overlay ─────────────────────────────────── */
+.news-detail-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px;
+  overflow-y: auto;
+  animation: nd-fade-in .18s ease;
+}
+@keyframes nd-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.news-detail-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 760px;
+  min-height: 200px;
+  padding: 0;
+  box-shadow: 0 24px 64px rgba(0,0,0,.2);
+  animation: nd-slide-in .2s cubic-bezier(.16,1,.3,1);
+  overflow: hidden;
+}
+@keyframes nd-slide-in {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.news-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  border-bottom: 1px solid #F1F5F9;
+  background: #FAFBFC;
+}
+
+.news-detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1E3A5F;
+  padding: 0;
+  transition: color .15s;
+}
+.news-detail-back:hover { color: #F59E0B; }
+
+.news-detail-byline {
+  font-size: 12px;
+  color: #94A3B8;
+  margin: 0;
+  font-style: italic;
+}
+
+.news-detail-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1E3A5F;
+  line-height: 1.3;
+  margin: 0;
+  padding: 28px 28px 16px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.news-detail-content {
+  font-size: 15px;
+  color: #334155;
+  line-height: 1.85;
+  margin: 0;
+  padding: 24px 28px 36px;
+  white-space: pre-wrap;
+}

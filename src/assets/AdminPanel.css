@@ -1,0 +1,233 @@
+/* ============================================================
+   AdminPanel.css
+   Shared styles for SubjectAdmin and GradeSectionAdmin.
+   Classes prefixed with .apanel- for clarity.
+   ============================================================ */
+
+/* ── Page wrapper — single column, stacked ──────────────────── */
+.apanel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+/* Force form child divs to full width of their containers */
+.apanel-form-card form > div,
+.apanel-row > div {
+  width: 100%;
+  min-width: 0;
+}
+.apanel-form-card form input,
+.apanel-form-card form select,
+.apanel-form-card form textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+
+/* ── Shared card style ──────────────────────────────────────── */
+.apanel-form-card,
+.apanel-list-card {
+  background: #fff;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 22px;
+  overflow: hidden;
+}
+
+/* ── Card titles ─────────────────────────────────────────────── */
+.apanel-form-title,
+.apanel-list-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1E3A5F;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #F1F5F9;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Count badge on list title */
+.apanel-count {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ── Form layout inside the card ────────────────────────────── */
+/* Override global form {} card styles — the card IS the wrapper */
+.apanel-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* FormInput component renders label + input; override card */
+.apanel-form form,
+.apanel-form-card form {
+  max-width: none;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: none;
+}
+
+/* Row of two inputs side-by-side */
+.apanel-row {
+  display: flex;
+  gap: 12px;
+}
+.apanel-row > * { flex: 1; }
+
+/* Generic field wrapper */
+.apanel-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Label (separate from FormInput's label) */
+.apanel-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+/* Checkbox grid */
+.apanel-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 6px;
+  padding: 10px;
+  background: #F8FAFC;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 7px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.apanel-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: #334155;
+  cursor: pointer;
+  padding: 3px 0;
+}
+.apanel-checkbox {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  accent-color: #1E3A5F;
+}
+
+/* Form actions row */
+.apanel-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+/* ── List items ─────────────────────────────────────────────── */
+.apanel-items {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.apanel-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 13px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 7px;
+  transition: background .14s, border-color .14s;
+}
+.apanel-item:hover { background: #F1F5F9; border-color: #CBD5E1; }
+
+.apanel-item-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  overflow: hidden;
+  flex-wrap: wrap;
+}
+
+/* Grade badge (e.g. "Grade 5") */
+.apanel-item-badge {
+  flex-shrink: 0;
+  display: inline-block;
+  padding: 2px 8px;
+  background: #FFFBEB;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.apanel-item-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1E293B;
+}
+
+/* Subjects / extra info */
+.apanel-item-sub {
+  font-size: 12px;
+  color: #64748B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.apanel-item-actions {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+/* ── States ─────────────────────────────────────────────────── */
+.apanel-loading {
+  font-size: 13px;
+  color: #94A3B8;
+  font-style: italic;
+  padding: 8px 0;
+}
+.apanel-empty {
+  font-size: 13px;
+  color: #94A3B8;
+  font-style: italic;
+  text-align: center;
+  padding: 20px 0;
+}
+.apanel-error {
+  font-size: 12px;
+  font-weight: 500;
+  color: #B91C1C;
+  background: #FEF2F2;
+  border-left: 3px solid #DC2626;
+  border-radius: 0 5px 5px 0;
+  padding: 7px 11px;
+}

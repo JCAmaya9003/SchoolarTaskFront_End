@@ -1,220 +1,176 @@
-/* General styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* ============================================================
+   home.css
+   KEY: .container uses height:100vh directly.
+   This bypasses all React Router / AuthProvider / etc. wrappers
+   that otherwise break the height:100% chain.
+   ============================================================ */
 
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background-color: #f4f4f4;
-}
-
+/* ── App shell ──────────────────────────────────────────────── */
 .container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;       /* direct viewport reference — no chain dependency */
+  overflow: hidden;    /* clip overflow at the shell level */
+  background: #F1F5F9;
 }
 
-/* Header Styles */
+/* ── Header — exactly 56px, no flex resizing ────────────────── */
 .header {
-  background-color: #000;
-  color: white;
+  flex: 0 0 56px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 10px 20px;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: #1E3A5F;
+  box-shadow: 0 1px 0 rgba(0,0,0,.2), 0 2px 8px rgba(0,0,0,.15);
+  z-index: 50;
+  overflow: hidden;
 }
 
 .school-name {
-  font-size: 18px;
-  font-weight: bold;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: -.1px;
 }
 
+/* ── Navigation ─────────────────────────────────────────────── */
 .nav {
   display: flex;
-  gap: 15px;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  justify-content: flex-end;
+  padding-right: 12px;
+  overflow: hidden;
 }
 
 .nav a {
-  color: white;
-  text-decoration: none;
-  font-size: 16px;
+  display: inline-block;
   padding: 5px 10px;
-  border-radius: 4px;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.nav a:hover,
-.nav a[aria-current="page"] {
-  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,.65);
   text-decoration: none;
+  white-space: nowrap;
+  transition: background .15s, color .15s;
 }
+.nav a:hover        { background: rgba(255,255,255,.1); color: #fff; }
+.nav a[aria-current="page"] { background: rgba(255,255,255,.16); color: #fff; font-weight: 600; }
 
-/* Role-specific styles */
-.nav a[data-role="admin"] {
-  color: #dae01b;
-}
+/* Role accents */
+.nav a[data-role="admin"]                       { color: #FCD34D; }
+.nav a[data-role="admin"]:hover,
+.nav a[data-role="admin"][aria-current="page"]  { color: #F59E0B; background: rgba(245,158,11,.15); }
 
-.nav a[data-role="teacher"] {
-  color: #4caf50;
-}
+.nav a[data-role="teacher"]                      { color: #6EE7B7; }
+.nav a[data-role="teacher"]:hover,
+.nav a[data-role="teacher"][aria-current="page"] { color: #10B981; background: rgba(16,185,129,.15); }
 
-.nav a[data-role="parent"],
-.nav a[data-role="student"] {
-  color: #2196f3;
-}
+.nav a[data-role="student"]                      { color: #BAE6FD; }
+.nav a[data-role="student"]:hover,
+.nav a[data-role="student"][aria-current="page"] { color: #0EA5E9; background: rgba(14,165,233,.15); }
 
+.nav a[data-role="parent"]                       { color: #DDD6FE; }
+.nav a[data-role="parent"]:hover,
+.nav a[data-role="parent"][aria-current="page"]  { color: #8B5CF6; background: rgba(139,92,246,.15); }
+
+/* ── Logout ─────────────────────────────────────────────────── */
 .logout-button {
-  background-color: transparent;
-  color: white;
-  border: 1px solid white;
-  padding: 5px 10px;
+  flex-shrink: 0;
+  height: 30px;
+  padding: 0 12px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: 6px;
+  color: rgba(255,255,255,.75);
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background .15s, color .15s, border-color .15s;
 }
+.logout-button:hover { background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.5); }
 
-.logout-button:hover {
-  background-color: white;
-  color: black;
-}
+.mobile-logout  { display: none; }
+.desktop-logout { display: inline-flex; align-items: center; }
 
-/* Hamburger menu */
+/* ── Hamburger ──────────────────────────────────────────────── */
 .hamburger {
   display: none;
   flex-direction: column;
-  justify-content: space-around;
-  width: 2rem;
-  height: 2rem;
+  justify-content: center;
+  gap: 5px;
+  width: 32px;
+  height: 32px;
+  padding: 2px;
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 0;
-  z-index: 10;
+  flex-shrink: 0;
 }
-
 .hamburger span {
-  width: 2rem;
-  height: 0.25rem;
-  background: white;
-  border-radius: 10px;
-  transition: all 0.3s linear;
-  position: relative;
-  transform-origin: 1px;
+  display: block;
+  width: 20px;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255,255,255,.85);
+  transform-origin: center;
+  transition: transform .2s, opacity .2s;
 }
+.hamburger.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.active span:nth-child(2) { opacity: 0; }
+.hamburger.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-/* Main content styles */
+/* ── Main scrollable content ────────────────────────────────── */
 .content {
-  flex: 1; /* Allow the content to expand to fill the available space */
-  padding: 20px;
-  overflow-y: scroll; 
-  overflow-x: hidden; 
-  max-height: calc(100vh - 80px);
-  align-self: center;
+  flex: 1 1 0;
+  min-height: 0;      /* critical: allows flex child to shrink + scroll */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 24px 28px;
 }
 
-/* Center titles */
-.content h2 {
-  text-align: center; /* Center the text */
-  font-size: 2rem;    /* Adjust font size if needed */
-  margin-bottom: 20px; /* Add spacing below the title */
-          /* Ensure a consistent color for titles */
+/* Section headings (rendered by renderContent) */
+.content > div > h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1E3A5F;
+  margin: 0 0 18px;
 }
 
-
-/* Mobile logout button */
-.mobile-logout {
-  display: none;
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .header  { padding: 0 14px; }
+  .content { padding: 18px 16px; }
 }
 
-/* Responsive layout */
-@media (max-width: 768px) {
-  .header {
-    flex-wrap: nowrap;
-  }
+@media (max-width: 640px) {
+  .hamburger      { display: flex; }
+  .desktop-logout { display: none; }
+  .mobile-logout  { display: block; margin-top: 16px; }
 
-  .hamburger {
-    display: flex;
-  }
-
+  /* Slide-in nav drawer */
   .nav {
     position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 100%;
-    background-color: #000;
+    inset: 0;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    gap: 6px;
+    padding-right: 0;
+    background: #1E3A5F;
     transform: translateX(-100%);
-    transition: transform 0.3s ease-in-out;
+    transition: transform .24s cubic-bezier(.4,0,.2,1);
+    z-index: 200;
+    overflow: visible;
+    flex: none;
   }
+  .nav.active { transform: translateX(0); }
+  .nav a { font-size: 16px; padding: 10px 28px; }
 
-  .nav.active {
-    transform: translateX(0);
-  }
-
-  .desktop-logout {
-    display: none;
-  }
-
-  .mobile-logout {
-    display: block;
-    margin-top: 20px;
-  }
-
-  /* Hamburger to X transition */
-  .hamburger.active span:nth-child(1) {
-    transform: rotate(45deg);
-  }
-
-  .hamburger.active span:nth-child(2) {
-    opacity: 0;
-  }
-
-  .hamburger.active span:nth-child(3) {
-    transform: rotate(-45deg);
-  }
-}
-
-/* News section container */
-.news-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-}
-
-.news-item {
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  padding: 15px;
-  max-width: 300px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-}
-
-.news-item img {
-  width: 100%;
-  border-radius: 5px;
-  margin-bottom: 10px;
-}
-
-.news-item h3 {
-  font-size: 18px;
-  margin-bottom: 10px;
-}
-
-.news-item p {
-  font-size: 14px;
-  color: #555;
-}
-body::-webkit-scrollbar {
-  display: none;
+  .content { padding: 14px 12px; }
+  .content > div > h2 { font-size: 18px; }
 }

@@ -1,159 +1,875 @@
-import React, { useState, useEffect, useContext } from 'react';
-import useFetch from '../hooks/UseFetch';
-import usePost from '../hooks/UsePost';
-import useUpdate from '../hooks/UseUpdate';
-import useDelete from '../hooks/UseDelete';
-import FormInput from './FormInput';
-import { config } from '../utils/ConfigUtils';
-import { AuthContext } from '../contexts/AuthContext';
-import { jwtDecode } from 'jwt-decode';
+/**
+ * ReservationAdmin Component
+ *
+ * Role-based reservation management with admin-only extras:
+ *   • Places tab: create / edit / delete / toggle availability
+ *     Each place has its own allowed hours + blocked weekdays.
+ *
+ * ADMIN: All reservations, places management, per-place restrictions.
+ * TEACHER: Create/edit/delete own reservations.
+ * STUDENT: Create/edit/delete own reservations.
+ * PARENT: View-only.
+ */
 
+import { useState, useEffect, useRef } from "react";
+import * as reservationService from "../services/reservationService";
+import { DEFAULT_PLACE_RESTRICTIONS } from "../services/reservationService";
+import * as authService from "../services/authService";
+import "../assets/Reservations.css";
 
+// ─── helpers ─────────────────────────────────────────────────
+const fmt = (isoStr) => {
+  if (!isoStr) return "—";
+  return new Date(isoStr).toLocaleString([], {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 
+const toLocalInput = (isoStr) => {
+  if (!isoStr) return "";
+  const d = new Date(isoStr);
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+
+const DAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+const blankForm = { place: "", description: "", start_date: "", end_date: "" };
+const MAX_DESC = 1000;
+
+const blankPlace = {
+  place: "",
+  capacity: "",
+  type: "",
+  unavailable: false,
+  restrictions: { ...DEFAULT_PLACE_RESTRICTIONS },
+};
+
+// Time string → { hour, minute }
+const parseTime = (val) => {
+  const [h, m] = val.split(":").map(Number);
+  return { hour: h, minute: m };
+};
+const fmtRestrTime = (h, m) =>
+  `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+
+// ─────────────────────────────────────────────────────────────
 const ReservationAdmin = () => {
-  const { token } = useContext(AuthContext); // Get the token from AuthContext
+  const currentUser = authService.getCurrentUser();
+  const role = currentUser?.role;
+  const isAdmin = role === "admin";
+  const isReadOnly = role === "parent";
+  const canManage = !isReadOnly;
+
+  // ── Global state ──────────────────────────────────────────
   const [places, setPlaces] = useState([]);
   const [reservations, setReservations] = useState([]);
-  const [formData, setFormData] = useState({
-    lugar: '',
-    usuarioEmail: '', // This will be populated automatically
-    descripcion: '',
-    fecha_inicio: '',
-    fecha_fin: '',
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // ── Admin tab ─────────────────────────────────────────────
+  const [adminTab, setAdminTab] = useState("reservations"); // "reservations" | "places"
+
+  // ── Reservation form ──────────────────────────────────────
+  const [form, setForm] = useState(blankForm);
+  const [editing, setEditing] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [formError, setFormError] = useState("");
+  const formRef = useRef(null);
+
+  // ── Reservation filters ───────────────────────────────────
+  const [filterPlace, setFilterPlace] = useState("");
+  const [filterUser, setFilterUser] = useState("");
+  const [showOnlyMine, setShowOnlyMine] = useState(false);
+
+  // ── Place management ──────────────────────────────────────
+  const [placeForm, setPlaceForm] = useState(blankPlace);
+  const [editingPlace, setEditingPlace] = useState(null);
+  const [placeError, setPlaceError] = useState("");
+  const [placeFormVisible, setPlaceFormVisible] = useState(false);
+
+  // ── load ──────────────────────────────────────────────────
+  const load = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const [ps, rs] = await Promise.all([
+        reservationService.getAcademicPlaces(),
+        reservationService.getAllReservations(),
+      ]);
+      setPlaces(ps);
+      setReservations(rs);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Derived ───────────────────────────────────────────────
+  const displayed = reservations.filter((r) => {
+    if (filterPlace && (r.place?._id || r.place) !== filterPlace) return false;
+    if (filterUser && r.userEmail !== filterUser) return false;
+    if (showOnlyMine && r.userEmail !== currentUser?.email) return false;
+    return true;
   });
-  const [editingReservation, setEditingReservation] = useState(null);
+  const uniqueUsers = isAdmin
+    ? [...new Set(reservations.map((r) => r.userEmail))]
+    : [];
 
-  const { data: placesData, error: placesError, isLoading: placesLoading } = useFetch(`${config.backUrl}/api/academic_places`);
-  const { data: reservationsData, error: reservationsError, isLoading: reservationsLoading } = useFetch(`${config.backUrl}/api/reservations/all`);
-  const { postData: createReservation } = usePost();
-  const { updateData: updateReservation } = useUpdate();
-  const { deleteData: deleteReservation } = useDelete();
-  const { postData: placeName } = usePost();
-
-  const fetchPlaceName = async (lugarId) => {
-    try {
-      const response = await placeName(`${config.backUrl}academic_place/get-name`, { lugarId });
-      return response.nombre; 
-    } catch (error) {
-      console.error('Error fetching place name:', error);
-      return null;
-    }
-  };
-
-  useEffect(() => {
-    if (placesData) {
-      setPlaces(placesData);
-    }
-  }, [placesData]);
-
-  useEffect(() => {
-    if (reservationsData) {
-      setReservations(reservationsData);
-    }
-  }, [reservationsData]);
-
-  useEffect(() => {
-    if (token) {
-      const decodedToken = jwtDecode(token);
-      setFormData((prevData) => ({
-        ...prevData,
-        usuarioEmail: decodedToken.email, 
-      }));
-    }
-  }, [token]);
-
+  // ── Reservation handlers ──────────────────────────────────
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setForm({ ...form, [e.target.name]: e.target.value });
+    setFormError("");
   };
 
-  const handleReservationSubmit = async (e) => {
+  const openCreate = () => {
+    setEditing(null);
+    setForm(blankForm);
+    setFormError("");
+    setShowForm(true);
+  };
+  const openEdit = (res) => {
+    setEditing(res);
+    setForm({
+      place: res.place?._id || res.place || "",
+      description: res.description || "",
+      start_date: toLocalInput(res.start_date),
+      end_date: toLocalInput(res.end_date),
+    });
+    setFormError("");
+    setShowForm(true);
+    setTimeout(
+      () =>
+        formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      60,
+    );
+  };
+  const cancelForm = () => {
+    setShowForm(false);
+    setEditing(null);
+    setForm(blankForm);
+    setFormError("");
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setFormError("");
     try {
-      if (editingReservation) {
-        await updateReservation(`${config.backUrl}/api/reservations`, {
-          ...formData,
-          nuevoLugar: formData.lugar,
-          nueva_fecha_inicio: formData.fecha_inicio,
-          nueva_fecha_fin: formData.fecha_fin,
-        });
-        alert('Reservation updated successfully!');
-      } else {
-        await createReservation(`${config.backUrl}/api/reservations/create`, formData);
-        alert('Reservation created successfully!');
-      }
-      setFormData({
-        lugar: '',
-        usuarioEmail: '',
-        descripcion: '',
-        fecha_inicio: '',
-        fecha_fin: '',
-      });
-      setEditingReservation(null);
-    } catch (error) {
-      alert('Error: ' + error.message);
+      if (editing)
+        await reservationService.updateReservation(editing._id, form);
+      else await reservationService.createReservation(form);
+      cancelForm();
+      await load();
+    } catch (e) {
+      setFormError(e.message);
     }
   };
 
-  const handleDelete = async (reservation) => {
+  const handleDelete = async (res) => {
+    if (!window.confirm(`Delete reservation for "${res.place?.place}"?`))
+      return;
     try {
-      const nombreLugar = await fetchPlaceName(reservation.lugar._id);
-      await deleteReservation(`${config.backUrl}/api/reservations`, {
-        lugar: nombreLugar,
-        usuarioEmail: reservation.usuarioEmail, 
-      });
-      alert('Reservation deleted successfully!');
-    } catch (error) {
-      alert('Error deleting reservation: ' + error.message);
+      await reservationService.deleteReservation(res._id);
+      await load();
+    } catch (e) {
+      setError(e.message);
     }
   };
 
-  const handleEdit = (reservation) => {
-    setEditingReservation(reservation);
-    setFormData({
-      lugar: reservation.lugar._id,
-      usuarioEmail: reservation.usuarioEmail,
-      descripcion: reservation.descripcion,
-      fecha_inicio: reservation.fecha_inicio,
-      fecha_fin: reservation.fecha_fin,
+  const canEdit = (res) => isAdmin || res.userEmail === currentUser?.email;
+
+  // ── Place handlers ────────────────────────────────────────
+  const openPlaceCreate = () => {
+    setEditingPlace(null);
+    setPlaceForm({
+      ...blankPlace,
+      restrictions: { ...DEFAULT_PLACE_RESTRICTIONS },
+    });
+    setPlaceError("");
+    setPlaceFormVisible(true);
+  };
+  const openPlaceEdit = (p) => {
+    setEditingPlace(p);
+    setPlaceForm({
+      place: p.place,
+      capacity: p.capacity,
+      type: p.type || "",
+      unavailable: p.unavailable || false,
+      restrictions: { ...(p.restrictions || DEFAULT_PLACE_RESTRICTIONS) },
+    });
+    setPlaceError("");
+    setPlaceFormVisible(true);
+  };
+  const cancelPlaceForm = () => {
+    setPlaceFormVisible(false);
+    setEditingPlace(null);
+    setPlaceForm(blankPlace);
+    setPlaceError("");
+  };
+
+  const setPlaceRestriction = (field, value) => {
+    setPlaceForm((prev) => ({
+      ...prev,
+      restrictions: { ...prev.restrictions, [field]: value },
+    }));
+  };
+
+  const toggleBlockedDay = (day) => {
+    setPlaceForm((prev) => {
+      const blocked = prev.restrictions.blockedWeekdays.includes(day)
+        ? prev.restrictions.blockedWeekdays.filter((d) => d !== day)
+        : [...prev.restrictions.blockedWeekdays, day];
+      return {
+        ...prev,
+        restrictions: { ...prev.restrictions, blockedWeekdays: blocked },
+      };
     });
   };
 
+  const handlePlaceSubmit = async (e) => {
+    e.preventDefault();
+    setPlaceError("");
+    try {
+      if (editingPlace)
+        await reservationService.updateAcademicPlace(
+          editingPlace._id,
+          placeForm,
+        );
+      else await reservationService.createAcademicPlace(placeForm);
+      cancelPlaceForm();
+      await load();
+    } catch (e) {
+      setPlaceError(e.message);
+    }
+  };
+
+  const handlePlaceDelete = async (p) => {
+    if (
+      !window.confirm(
+        `Delete "${p.place}"? Linked reservations remain but this place won't be selectable.`,
+      )
+    )
+      return;
+    try {
+      await reservationService.deleteAcademicPlace(p._id);
+      await load();
+    } catch (e) {
+      setPlaceError(e.message);
+    }
+  };
+
+  const handleToggleAvailability = async (p) => {
+    try {
+      await reservationService.updateAcademicPlace(p._id, {
+        ...p,
+        unavailable: !p.unavailable,
+      });
+      await load();
+    } catch (e) {
+      setPlaceError(e.message);
+    }
+  };
+
+  // ═══════════════════════════════════ RENDER ══════════════════
   return (
-    <div>
-      <h1>Reservation Management</h1>
-      {placesLoading && <p>Loading places...</p>}
-      {placesError && <p>Error loading places: {placesError.message}</p>}
-      {reservationsLoading && <p>Loading reservations...</p>}
-      {reservationsError && <p>Error loading reservations: {reservationsError.message}</p>}
+    <div className="res-page">
+      {/* ── Header ─────────────────────────────────────────── */}
+      <div className="res-header">
+        <div>
+          <h2 className="res-title">Reservations</h2>
+          <p className="res-subtitle">
+            {isAdmin
+              ? "Manage all academic place reservations"
+              : isReadOnly
+                ? "View upcoming reservations"
+                : "Manage your reservations"}
+          </p>
+        </div>
+        {canManage && !showForm && adminTab === "reservations" && (
+          <button className="res-btn res-btn--primary" onClick={openCreate}>
+            + New Reservation
+          </button>
+        )}
+      </div>
 
-      <h3>Create New Reservation</h3>
-      <form onSubmit={handleReservationSubmit}>
-        <label htmlFor="lugar">Lugar</label>
-        <select name="lugar" value={formData.lugar} onChange={handleChange} required>
-          <option value="">Seleccione un lugar</option>
-          {places.map((place) => (
-            <option key={place._id} value={place._id}>{place.lugar}</option>
+      {/* ── Admin sub-tabs ─────────────────────────────────── */}
+      {isAdmin && (
+        <div className="res-subtabs">
+          {[
+            { id: "reservations", label: "Reservations" },
+            { id: "places", label: "Places & Restrictions" },
+          ].map((t) => (
+            <button
+              key={t.id}
+              className={`res-subtab${adminTab === t.id ? " res-subtab--active" : ""}`}
+              onClick={() => setAdminTab(t.id)}
+            >
+              {t.label}
+            </button>
           ))}
-        </select>
-        <FormInput name="descripcion" label="Descripción" value={formData.descripcion} onChange={handleChange} as="textarea" required />
-        <FormInput name="fecha_inicio" label="Fecha de Inicio" value={formData.fecha_inicio} onChange={handleChange} type="datetime-local" required />
-        <FormInput name="fecha_fin" label="Fecha de Fin" value={formData.fecha_fin} onChange={handleChange} type="datetime-local" required />
-        <button type="submit">
-          {editingReservation ? 'Update Reservation' : 'Create Reservation'}
-        </button>
-      </form>
+        </div>
+      )}
 
-      <h3>Existing Reservations</h3>
-      <ul>
-        {reservations.map((reservation) => (
-          <li key={reservation._id}>
-            {reservation.lugar._id} - {reservation.usuario.email} - {reservation.descripcion} - {reservation.fecha_inicio} - {reservation.fecha_fin}
-            <button onClick={() => handleEdit(reservation)}>Edit</button>
-            <button onClick={() => handleDelete(reservation)}>Delete</button>
-          </li>
-        ))}
-      </ul>
+      {error && (
+        <div className="res-error" style={{ marginBottom: 12 }}>
+          {error}
+        </div>
+      )}
+
+      {/* ══════════════════ RESERVATIONS TAB ════════════════ */}
+      {adminTab === "reservations" && (
+        <>
+          {/* Reservation form */}
+          {showForm && (
+            <div className="res-form-card" ref={formRef}>
+              <h3 className="res-form-title">
+                {editing ? "Edit Reservation" : "New Reservation"}
+              </h3>
+              {formError && <div className="res-error">{formError}</div>}
+              <form onSubmit={handleSubmit} className="res-form">
+                <div className="res-field">
+                  <label className="res-label" htmlFor="res-place">
+                    Place
+                  </label>
+                  <select
+                    id="res-place"
+                    name="place"
+                    className="res-select"
+                    value={form.place}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Select a place…</option>
+                    {places
+                      .filter((p) => !p.unavailable)
+                      .map((p) => {
+                        const r = p.restrictions || DEFAULT_PLACE_RESTRICTIONS;
+                        return (
+                          <option key={p._id} value={p._id}>
+                            {p.place} (cap. {p.capacity}) —{" "}
+                            {fmtRestrTime(
+                              r.allowedStartHour,
+                              r.allowedStartMinute,
+                            )}
+                            –
+                            {fmtRestrTime(r.allowedEndHour, r.allowedEndMinute)}
+                          </option>
+                        );
+                      })}
+                  </select>
+                </div>
+
+                {/* Show selected place's restrictions as a hint */}
+                {form.place &&
+                  (() => {
+                    const sel = places.find((p) => p._id === form.place);
+                    const r = sel?.restrictions || DEFAULT_PLACE_RESTRICTIONS;
+                    return (
+                      <p className="res-hint">
+                        Allowed:{" "}
+                        {fmtRestrTime(r.allowedStartHour, r.allowedStartMinute)}
+                        -{fmtRestrTime(r.allowedEndHour, r.allowedEndMinute)}
+                        {r.blockedWeekdays.length > 0 && (
+                          <>
+                            {" "}
+                            · Blocked:{" "}
+                            {r.blockedWeekdays
+                              .map((d) => DAY_NAMES[d])
+                              .join(", ")}
+                          </>
+                        )}
+                      </p>
+                    );
+                  })()}
+
+                <div className="res-field">
+                  <label
+                    className="res-label"
+                    htmlFor="res-desc"
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "baseline",
+                    }}
+                  >
+                    Description
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color:
+                          MAX_DESC - form.description.length < 100
+                            ? "#DC2626"
+                            : "#94A3B8",
+                        fontWeight: 400,
+                      }}
+                    >
+                      {MAX_DESC - form.description.length} / {MAX_DESC} left
+                    </span>
+                  </label>
+                  <textarea
+                    id="res-desc"
+                    name="description"
+                    className="res-textarea"
+                    value={form.description}
+                    onChange={handleChange}
+                    maxLength={MAX_DESC}
+                    placeholder="Purpose of the reservation…"
+                    required
+                    style={{
+                      resize: "none",
+                      fontFamily: "inherit",
+                      height: 100,
+                    }}
+                  />
+                </div>
+                <div className="res-row">
+                  <div className="res-field">
+                    <label className="res-label" htmlFor="res-start">
+                      Start
+                    </label>
+                    <input
+                      id="res-start"
+                      name="start_date"
+                      type="datetime-local"
+                      className="res-input"
+                      value={form.start_date}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                  <div className="res-field">
+                    <label className="res-label" htmlFor="res-end">
+                      End
+                    </label>
+                    <input
+                      id="res-end"
+                      name="end_date"
+                      type="datetime-local"
+                      className="res-input"
+                      value={form.end_date}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="res-form-actions">
+                  <button type="submit" className="res-btn res-btn--primary">
+                    {editing ? "Save Changes" : "Create"}
+                  </button>
+                  <button
+                    type="button"
+                    className="res-btn res-btn--ghost"
+                    onClick={cancelForm}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Filters */}
+          {!showForm && reservations.length > 0 && (
+            <div className="res-filters">
+              <select
+                className="res-select res-select--sm"
+                value={filterPlace}
+                onChange={(e) => setFilterPlace(e.target.value)}
+              >
+                <option value="">All places</option>
+                {places.map((p) => (
+                  <option key={p._id} value={p._id}>
+                    {p.place}
+                  </option>
+                ))}
+              </select>
+              {isAdmin && (
+                <select
+                  className="res-select res-select--sm"
+                  value={filterUser}
+                  onChange={(e) => setFilterUser(e.target.value)}
+                >
+                  <option value="">All users</option>
+                  {uniqueUsers.map((u) => (
+                    <option key={u} value={u}>
+                      {u}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {!isAdmin && canManage && (
+                <button
+                  className={`res-btn res-btn--sm ${showOnlyMine ? "res-btn--primary" : "res-btn--ghost"}`}
+                  onClick={() => setShowOnlyMine((v) => !v)}
+                >
+                  {showOnlyMine ? "My reservations" : "Show only mine"}
+                </button>
+              )}
+              {(filterPlace || filterUser || showOnlyMine) && (
+                <button
+                  className="res-btn res-btn--ghost res-btn--sm"
+                  onClick={() => {
+                    setFilterPlace("");
+                    setFilterUser("");
+                    setShowOnlyMine(false);
+                  }}
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* List */}
+          {loading ? (
+            <p className="res-loading">Loading reservations…</p>
+          ) : displayed.length === 0 ? (
+            <div className="res-empty">
+              <p>No reservations found.</p>
+              {canManage && (
+                <button
+                  className="res-btn res-btn--primary"
+                  onClick={openCreate}
+                >
+                  Create your first reservation
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="res-list">
+              {displayed.map((res) => {
+                const isPast = new Date(res.end_date) < new Date();
+                return (
+                  <div
+                    key={res._id}
+                    className={`res-card ${isPast ? "res-card--past" : "res-card--upcoming"}`}
+                  >
+                    <div className="res-card-left">
+                      <span className="res-place-badge">
+                        {res.place?.place || res.place}
+                      </span>
+                      <p className="res-description">{res.description}</p>
+                      <div className="res-times">
+                        <span>{fmt(res.start_date)}</span>
+                        <span className="res-arrow">→</span>
+                        <span>{fmt(res.end_date)}</span>
+                      </div>
+                      {isAdmin && (
+                        <span className="res-user-tag">{res.userEmail}</span>
+                      )}
+                      {!isAdmin && res.userEmail === currentUser?.email && (
+                        <span className="res-mine-tag">✓ Yours</span>
+                      )}
+                    </div>
+                    <div className="res-card-right">
+                      <span
+                        className={`res-status ${isPast ? "res-status--past" : "res-status--upcoming"}`}
+                      >
+                        {isPast ? "Past" : "Upcoming"}
+                      </span>
+                      {canEdit(res) && !isReadOnly && (
+                        <div className="res-actions">
+                          <button
+                            className="res-btn res-btn--sm res-btn--ghost"
+                            onClick={() => openEdit(res)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="res-btn res-btn--sm res-btn--danger"
+                            onClick={() => handleDelete(res)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ══════════════════ PLACES TAB (admin only) ═════════ */}
+      {isAdmin && adminTab === "places" && (
+        <div className="res-admin-panel">
+          <div className="res-panel-header">
+            <h3 className="res-panel-title">Places & Restrictions</h3>
+            {!placeFormVisible && (
+              <button
+                className="res-btn res-btn--primary"
+                onClick={openPlaceCreate}
+              >
+                + Add Place
+              </button>
+            )}
+          </div>
+
+          {placeError && <div className="res-error">{placeError}</div>}
+
+          {/* Place form */}
+          {placeFormVisible && (
+            <div className="res-form-card">
+              <h3 className="res-form-title">
+                {editingPlace ? "Edit Place" : "New Place"}
+              </h3>
+              <form onSubmit={handlePlaceSubmit} className="res-form">
+                {/* Basic info */}
+                <div className="res-row">
+                  <div className="res-field">
+                    <label className="res-label">Name *</label>
+                    <input
+                      className="res-input"
+                      value={placeForm.place}
+                      onChange={(e) =>
+                        setPlaceForm({ ...placeForm, place: e.target.value })
+                      }
+                      placeholder="e.g. Library, Science Lab…"
+                      required
+                    />
+                  </div>
+                  <div className="res-field">
+                    <label className="res-label">Capacity *</label>
+                    <input
+                      className="res-input"
+                      type="number"
+                      min="1"
+                      value={placeForm.capacity}
+                      onChange={(e) =>
+                        setPlaceForm({ ...placeForm, capacity: e.target.value })
+                      }
+                      placeholder="e.g. 30"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="res-row">
+                  <div className="res-field">
+                    <label className="res-label">Type</label>
+                    <input
+                      className="res-input"
+                      value={placeForm.type}
+                      onChange={(e) =>
+                        setPlaceForm({ ...placeForm, type: e.target.value })
+                      }
+                      placeholder="e.g. Lab, Classroom, Hall…"
+                    />
+                  </div>
+                  <div className="res-field">
+                    <label className="res-label">Status</label>
+                    <label className="res-toggle">
+                      <input
+                        type="checkbox"
+                        checked={placeForm.unavailable}
+                        onChange={(e) =>
+                          setPlaceForm({
+                            ...placeForm,
+                            unavailable: e.target.checked,
+                          })
+                        }
+                      />
+                      <span className="res-toggle-track" />
+                      <span
+                        style={{
+                          fontSize: 12,
+                          color: placeForm.unavailable ? "#B91C1C" : "#065F46",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {placeForm.unavailable ? "Unavailable" : "Available"}
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Per-place restrictions */}
+                <div className="res-restrict-card">
+                  <h4 className="res-restrict-title">
+                    Allowed Time Range for this Place
+                  </h4>
+                  <div className="res-row">
+                    <div className="res-field">
+                      <label className="res-label">Earliest start</label>
+                      <input
+                        type="time"
+                        className="res-input"
+                        value={fmtRestrTime(
+                          placeForm.restrictions.allowedStartHour,
+                          placeForm.restrictions.allowedStartMinute,
+                        )}
+                        onChange={(e) => {
+                          const { hour: h, minute: m } = parseTime(
+                            e.target.value,
+                          );
+                          setPlaceRestriction("allowedStartHour", h);
+                          setPlaceRestriction("allowedStartMinute", m);
+                        }}
+                      />
+                    </div>
+                    <div className="res-field">
+                      <label className="res-label">Latest end</label>
+                      <input
+                        type="time"
+                        className="res-input"
+                        value={fmtRestrTime(
+                          placeForm.restrictions.allowedEndHour,
+                          placeForm.restrictions.allowedEndMinute,
+                        )}
+                        onChange={(e) => {
+                          const { hour: h, minute: m } = parseTime(
+                            e.target.value,
+                          );
+                          setPlaceRestriction("allowedEndHour", h);
+                          setPlaceRestriction("allowedEndMinute", m);
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      className="res-label"
+                      style={{ marginBottom: 8, display: "block" }}
+                    >
+                      Blocked Days
+                    </label>
+                    <p className="res-hint" style={{ marginBottom: 8 }}>
+                      Click a day to block/unblock it for this place.
+                    </p>
+                    <div className="res-day-grid">
+                      {DAY_NAMES.map((name, idx) => (
+                        <label
+                          key={idx}
+                          className={`res-day-chip${placeForm.restrictions.blockedWeekdays.includes(idx) ? " res-day-chip--blocked" : ""}`}
+                        >
+                          <input
+                            type="checkbox"
+                            style={{ display: "none" }}
+                            checked={placeForm.restrictions.blockedWeekdays.includes(
+                              idx,
+                            )}
+                            onChange={() => toggleBlockedDay(idx)}
+                          />
+                          {name.slice(0, 3)}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="res-form-actions">
+                  <button type="submit" className="res-btn res-btn--primary">
+                    {editingPlace ? "Save Changes" : "Create Place"}
+                  </button>
+                  <button
+                    type="button"
+                    className="res-btn res-btn--ghost"
+                    onClick={cancelPlaceForm}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Places list */}
+          {loading ? (
+            <p className="res-loading">Loading…</p>
+          ) : places.length === 0 ? (
+            <div className="res-empty">
+              <p>No places yet. Add one to allow reservations.</p>
+            </div>
+          ) : (
+            <div className="res-list">
+              {places.map((p) => {
+                const r = p.restrictions || DEFAULT_PLACE_RESTRICTIONS;
+                return (
+                  <div
+                    key={p._id}
+                    className={`res-card ${p.unavailable ? "res-card--past" : "res-card--upcoming"}`}
+                  >
+                    <div className="res-card-left">
+                      <span className="res-place-badge">{p.place}</span>
+                      <p className="res-description">
+                        Capacity: {p.capacity}
+                        {p.type ? ` · ${p.type}` : ""}
+                      </p>
+                      <div className="res-times">
+                        <span>
+                          {" "}
+                          {fmtRestrTime(
+                            r.allowedStartHour,
+                            r.allowedStartMinute,
+                          )}{" "}
+                          – {fmtRestrTime(r.allowedEndHour, r.allowedEndMinute)}
+                        </span>
+                        {r.blockedWeekdays.length > 0 && (
+                          <>
+                            <span className="res-arrow">·</span>
+                            <span>
+                              {" "}
+                              {r.blockedWeekdays
+                                .map((d) => DAY_NAMES[d].slice(0, 3))
+                                .join(", ")}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="res-card-right">
+                      <span
+                        className={`res-status ${p.unavailable ? "res-status--past" : "res-status--upcoming"}`}
+                      >
+                        {p.unavailable ? "Unavailable" : "Available"}
+                      </span>
+                      <div className="res-actions">
+                        <button
+                          className="res-btn res-btn--sm res-btn--ghost"
+                          onClick={() => handleToggleAvailability(p)}
+                        >
+                          {p.unavailable ? "Enable" : "Disable"}
+                        </button>
+                        <button
+                          className="res-btn res-btn--sm res-btn--ghost"
+                          onClick={() => openPlaceEdit(p)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="res-btn res-btn--sm res-btn--danger"
+                          onClick={() => handlePlaceDelete(p)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -1,0 +1,100 @@
+/* ============================================================
+   SchoolarTask — Global Reset & Design Tokens
+   Font: DM Sans — loaded via <link> in index.html
+   ============================================================ */
+
+/* ── Reset ─────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Kill the page scroll at root level.
+   .container uses height:100vh, so the app stays in-viewport.
+   .content is the ONLY scroll container (overflow-y:auto).
+   .login-page uses min-height:100vh to fill naturally. */
+html {
+  overflow: hidden;
+  height: 100%;
+}
+body {
+  overflow: hidden;
+  height: 100%;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: #1E293B;
+  background: #F1F5F9;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Typography ─────────────────────────────────────────────── */
+h1 { font-size: 26px; font-weight: 700; line-height: 1.2; color: #1E3A5F; }
+h2 { font-size: 20px; font-weight: 700; line-height: 1.25; color: #1E3A5F; }
+h3 { font-size: 16px; font-weight: 600; line-height: 1.3;  color: #1E3A5F; }
+h4 { font-size: 14px; font-weight: 600; line-height: 1.35; color: #1E3A5F; }
+h5 { font-size: 12px; font-weight: 600; line-height: 1.4;  color: #334155; }
+
+p { font-size: 14px; line-height: 1.65; color: #475569; }
+
+/* ── Links — zero underline globally ───────────────────────── */
+a, a:hover, a:visited, a:active {
+  text-decoration: none !important;
+  color: inherit;
+}
+
+/* ── Global button utility (.btn + variants) ─────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 7px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color .15s, box-shadow .15s, transform .1s;
+  user-select: none;
+}
+.btn:active       { transform: scale(.97); }
+.btn:focus-visible { outline: 2px solid #1E3A5F; outline-offset: 2px; }
+
+/* Size modifiers */
+.btn-sm { height: 28px; padding: 0 10px; font-size: 12px; border-radius: 5px; }
+.btn-lg { height: 44px; padding: 0 20px; font-size: 15px; border-radius: 8px; }
+
+/* Color variants */
+.btn-primary   { background: #1E3A5F; color: #fff; box-shadow: 0 1px 3px rgba(30,58,95,.25); }
+.btn-primary:hover   { background: #2C5282; }
+.btn-secondary { background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0; }
+.btn-secondary:hover { background: #E2E8F0; }
+.btn-success   { background: #059669; color: #fff; }
+.btn-success:hover   { background: #047857; }
+.btn-danger    { background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; }
+.btn-danger:hover    { background: #FEE2E2; }
+.btn-warning   { background: #FFFBEB; color: #92400E; border: 1px solid #FDE68A; }
+.btn-warning:hover   { background: #FEF3C7; }
+.btn-info      { background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
+.btn-info:hover      { background: #DBEAFE; }
+.btn-ghost     { background: transparent; color: #475569; border: 1px solid #CBD5E1; }
+.btn-ghost:hover     { background: #F8FAFC; }
+
+/* ── Base elements ──────────────────────────────────────────── */
+img { display: block; max-width: 100%; }
+button, input, select, textarea { font-family: inherit; }
+button { cursor: pointer; }
+
+/* ── Thin scrollbar (for .content, modals, etc.) ───────────── */
+* { scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent; }
+::-webkit-scrollbar       { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }

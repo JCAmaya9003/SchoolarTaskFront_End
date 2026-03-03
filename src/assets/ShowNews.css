@@ -1,112 +1,14 @@
-/* ShowNews.css */
-.news-container {
-    padding: 20px;
-    background-color: #f9f9f9;
-    overflow-x: hidden; /* Prevent horizontal overflow issues */
-  }
-  
-  .banner-image {
-    display: none; /* Hide the banner image unless needed */
-  }
-  
-  .news-content {
-    display: flex;
-    justify-content: center;
-    overflow-x: auto; /* Enable horizontal scrolling if needed */
-    width: 100%;
-  }
-  
-  .news-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); /* Wider columns */
-    gap: 20px;
-    width: 100%;
-    max-width: 1400px; /* Increased container width */
-    overflow-x: auto; /* Enable horizontal scrolling */
-    overflow-y: hidden; /* No vertical scrolling within the grid */
-  }
+/* ============================================================
+   ShowNews.css — Public news feed grid
+   Structure: .show-news-grid > ShowMessage (.news-card)
+   ============================================================ */
 
-  .scroll-wrapper {
-    overflow-x: auto; /* Horizontal scrolling */
-    width: 100%;
-  }
-  
-  .news-item {
-    background-color: #ffffff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    text-align: left;
-    height: 400px; /* Set a taller card height */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    overflow: hidden; /* Prevent text overflow */
-  }
-  
-  .news-item:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-  }
-  
-  .news-item h2 {
-    font-size: 1.5em;
-    margin: 0 0 10px;
-    color: #333;
-  }
-  
-  .news-item p {
-    font-size: 1em;
-    color: #666;
-    margin: 5px 0;
-    line-height: 1.5; /* Improved readability */
-    overflow: hidden; /* Prevents text overflow */
-    text-overflow: ellipsis; /* Adds ellipsis for overflowing text */
-    display: -webkit-box;
-    -webkit-line-clamp: 5; /* Limits text to 5 lines */
-    -webkit-box-orient: vertical;
-  }
-  
-  /* Responsive Styles for Mobile Devices */
-  @media (max-width: 768px) {
-    .news-grid {
-      grid-template-columns: 1fr; /* Narrower columns */
-      gap: 15px; /* Reduced gap for smaller screens */
-      overflow-x: auto; /* Allow horizontal scrolling on narrow screens */
-    }
-  
-    .news-item {
-      height: auto; /* Allow height to adjust based on content */
-      padding: 15px; /* Reduced padding */
-    }
-  
-    .news-item h2 {
-      font-size: 1.2em; /* Smaller font size for headings */
-    }
-  
-    .news-item p {
-      font-size: 0.9em; /* Smaller font size for paragraphs */
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .news-grid {
-      grid-template-columns: 1fr; /* Single-column layout */
-      gap: 10px; /* Reduced gap for smaller screens */
-      overflow-x: visible; /* No horizontal scrolling for single-column layout */
-    }
-  
-    .news-item {
-      padding: 10px; /* Even smaller padding for very small screens */
-    }
-  
-    .news-item h2 {
-      font-size: 1em; /* Further reduced heading size */
-    }
-  
-    .news-item p {
-      font-size: 0.8em; /* Further reduced paragraph size */
-    }
-  }
-  
+.show-news-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .show-news-grid { grid-template-columns: 1fr; gap: 12px; }
+}

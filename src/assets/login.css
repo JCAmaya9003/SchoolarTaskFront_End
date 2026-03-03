@@ -1,188 +1,335 @@
+/* ============================================================
+   login.css
+   .login-page: min-height:100vh so it always fills the screen.
+   .login-container: always overflow-y:auto so form scrolls
+   internally on short screens, never clips content.
+   ============================================================ */
 
-body, html {
-    margin: 0;
-    padding: 0;
-    font-family: Arial, sans-serif;
-    height: 100%;
-    overflow: hidden;
-  }
-  
-  .login-page {
-    display: flex;
-    width: 100vw;
-    height: 100vh;
-  }
-  
- 
+/* ── Page wrapper ───────────────────────────────────────────── */
+.login-page {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;   /* fills screen, can be taller if content is long */
+}
+
+/* ── Left: brand panel ──────────────────────────────────────── */
+.side-image {
+  flex: 1 1 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;        /* stays in view while right side scrolls */
+  align-self: flex-start;
+  background: linear-gradient(155deg, #1E3A5F 0%, #0F2135 100%);
+  overflow: hidden;
+}
+
+/* decorative glow */
+.side-image::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  left: -60px;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245,158,11,.08) 0%, transparent 70%);
+}
+.side-image::after {
+  content: '';
+  position: absolute;
+  bottom: -80px;
+  right: -80px;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245,158,11,.12) 0%, transparent 65%);
+}
+
+.hero-brand {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 52px;
+  color: #fff;
+  z-index: 1;
+}
+
+.hero-brand-line {
+  width: 36px;
+  height: 3px;
+  border-radius: 2px;
+  background: #F59E0B;
+  margin-bottom: 22px;
+}
+
+.hero-brand-name {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  margin-bottom: 14px;
+  color: #fff;
+}
+
+.hero-brand-tagline {
+  font-size: 14px;
+  line-height: 1.75;
+  color: rgba(255,255,255,.5);
+  max-width: 280px;
+}
+
+/* ── Right: form panel ──────────────────────────────────────── */
+.login-container {
+  flex: 0 0 400px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100vh;     /* at minimum fills the screen */
+  padding: 48px 44px;
+  background: #fff;
+  box-shadow: -6px 0 30px rgba(0,0,0,.1);
+  overflow-y: auto;      /* scroll internally on short screens */
+}
+
+/* ── Header eyebrow ─────────────────────────────────────────── */
+.login-header h3 {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #F59E0B;
+  margin-bottom: 12px;
+}
+
+/* ── Page title ─────────────────────────────────────────────── */
+.login-container h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1E3A5F;
+  letter-spacing: -.3px;
+  margin-bottom: 4px;
+}
+
+/* ── Subtitle ───────────────────────────────────────────────── */
+.login-intro {
+  font-size: 13px;
+  color: #64748B;
+  margin-bottom: 24px;
+}
+
+/* ── Error banner ───────────────────────────────────────────── */
+.login-error {
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  background: #FEF2F2;
+  border-left: 3px solid #DC2626;
+  border-radius: 0 6px 6px 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #B91C1C;
+}
+
+/* ── Form — reset the global form card style ────────────────── */
+.login-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  width: 100%;
+  max-width: none;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: none;
+  margin: 0;
+}
+
+/* ── Field labels ───────────────────────────────────────────── */
+.login-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: #334155;
+  margin-bottom: 5px;
+}
+
+/* ── Inputs ─────────────────────────────────────────────────── */
+.login-container form input {
+  display: block;
+  width: 100%;
+  height: 42px;
+  padding: 0 13px;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 7px;
+  font-size: 14px;
+  color: #0F172A;
+  background: #F8FAFC;
+  box-sizing: border-box;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.login-container form input::placeholder { color: #94A3B8; }
+.login-container form input:focus {
+  outline: none;
+  border-color: #1E3A5F;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(30,58,95,.1);
+}
+
+/* ── Password field wrapper ──────────────────────────────────── */
+.login-pw-wrap {
+  position: relative;
+  width: 100%;
+}
+.login-pw-wrap input {
+  padding-right: 42px !important;
+}
+.login-pw-toggle {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #94A3B8;
+  display: flex;
+  align-items: center;
+  transition: color .15s;
+}
+.login-pw-toggle:hover { color: #1E3A5F; }
+
+
+
+/* ── Forgot password link ───────────────────────────────────── */
+.forgot-password {
+  align-self: flex-end;
+  font-size: 12px;
+  color: #64748B;
+  transition: color .15s;
+}
+.forgot-password:hover { color: #1E3A5F; }
+
+/* ── Sign in button ─────────────────────────────────────────── */
+.login-button {
+  height: 44px;
+  background: #1E3A5F;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  cursor: pointer;
+  transition: background .15s, box-shadow .15s, transform .1s;
+  box-shadow: 0 1px 4px rgba(30,58,95,.25);
+  margin-top: 2px;
+}
+.login-button:hover  { background: #2C5282; box-shadow: 0 4px 12px rgba(30,58,95,.3); }
+.login-button:active { transform: scale(.98); }
+
+/* ── Divider ────────────────────────────────────────────────── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0;
+  font-size: 11px;
+  color: #94A3B8;
+  font-weight: 500;
+  letter-spacing: .05em;
+}
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #E2E8F0;
+}
+
+/* ── Google button ──────────────────────────────────────────── */
+.google-login-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  background: #fff;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.google-login-button:hover { background: #F8FAFC; border-color: #CBD5E1; }
+.google-login-button img   { width: 16px; height: 16px; }
+
+/* ── Footer note ────────────────────────────────────────────── */
+.login-container footer {
+  margin-top: 20px;
+  font-size: 12px;
+  color: #94A3B8;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════ */
+
+/* Tablet landscape — shrink panel */
+@media (max-width: 1024px) {
+  .login-container { flex: 0 0 360px; padding: 40px 36px; }
+}
+
+@media (max-width: 900px) {
+  .login-container { flex: 0 0 320px; padding: 36px 28px; }
+  .hero-brand { padding: 0 40px; }
+  .hero-brand-name { font-size: 28px; }
+  .hero-brand-tagline { display: none; }
+}
+
+/* Tablet portrait + phone — vertical stack */
+@media (max-width: 640px) {
+  .login-page      { flex-direction: column; }
+
+  /* Hero: compact banner on top */
   .side-image {
-    flex: 1;
-    overflow: hidden;
+    position: relative;
+    height: 180px;        /* fixed banner, no viewport dependency */
+    flex: 0 0 180px;
+    align-self: auto;
   }
-  
-  .side-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  .hero-brand {
+    position: absolute;
+    padding: 0 28px;
+    justify-content: center;
   }
-  
- 
+  .hero-brand-name    { font-size: 24px; }
+  .hero-brand-tagline { display: none; }
+
+  /* Form: fill remaining space, scroll if content is tall */
   .login-container {
-    flex: 0 0 400px;
-    padding: 40px 30px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background-color: #000;
-    color: white;
-    overflow-y: auto;
-  }
-  
- 
-  .login-header {
-    text-align: center;
-    margin-bottom: 20px;
-  }
-  
-  .school-logo {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-  }
-  
-  h3 {
-    margin-top: 10px;
-    font-size: 18px;
-  }
-  
-
-  form {
-    width: 100%;
-    max-width: 300px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-  
-  form input {
-    width: 100%;
-    padding: 10px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    font-size: 16px;
-  }
-  
-  .forgot-password {
-    text-align: right;
-    font-size: 14px;
-    color: #999;
-    text-decoration: none;
-  }
-  
-  .forgot-password:hover {
-    text-decoration: underline;
-  }
-  
-
-  .login-button {
-    background-color: #4caf50;
-    border: none;
-    padding: 12px;
-    border-radius: 4px;
-    font-size: 16px;
-    font-weight: bold;
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  
-  .login-button:hover {
-    background-color: #45a049;
-  }
-  
-  /* Divider */
-  .divider {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 20px 0;
-    color: white;
-    font-size: 14px;
-  }
-  
-  .divider::before,
-  .divider::after {
-    content: "";
     flex: 1;
-    height: 1px;
-    background-color: #444;
+    width: 100%;
+    min-height: 0;
+    justify-content: flex-start;
+    padding: 32px 24px 40px;
+    box-shadow: none;
+    border-top: 1px solid #E2E8F0;
   }
-  
-  
-  .google-login-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: white;
-    color: black;
-    border: 1px solid #ccc;
-    padding: 10px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 500;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-  
-  .google-login-button img {
-    width: 20px;
-    height: 20px;
-    margin-right: 10px;
-  }
-  
-  .google-login-button:hover {
-    background-color: #f5f5f5;
-  }
-  
- 
-  footer {
-    text-align: center;
-    font-size: 14px;
-    color: #ccc;
-    margin-top: 20px;
-  }
-  
-  
-  @media (max-width: 1200px) {
-    .login-container {
-      flex: 0 0 350px;
-    }
-  }
-  
-  @media (max-width: 992px) {
-    .login-page {
-      flex-direction: column;
-    }
-  
-    .side-image {
-      flex: 0 0 25vh;
-    }
-  
-    .login-container {
-      flex: 1;
-      width: 100%;
-      max-width: none;
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .side-image {
-      display: none;
-    }
-  
-    .login-container {
-      padding: 0.125rem;
-    }
-  }
-  
-  
+  .login-container h1 { font-size: 22px; }
+}
+
+/* Small phone */
+@media (max-width: 380px) {
+  .side-image              { flex: 0 0 130px; height: 130px; }
+  .hero-brand-name         { font-size: 20px; }
+  .login-container         { padding: 24px 18px 36px; }
+  .login-container h1      { font-size: 20px; }
+}
