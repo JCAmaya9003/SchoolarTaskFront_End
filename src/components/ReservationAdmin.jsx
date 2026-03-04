@@ -15,7 +15,32 @@ import { useState, useEffect, useRef } from "react";
 import * as reservationService from "../services/reservationService";
 import { DEFAULT_PLACE_RESTRICTIONS } from "../services/reservationService";
 import * as authService from "../services/authService";
+import useFormErrors from "../hooks/useFormErrors";
+import FieldError from "./FieldError";
 import "../assets/Reservations.css";
+import "../assets/form.css";
+
+// ── Validation ───────────────────────────────────────────────
+const validateReservation = (f) => {
+  const errs = {};
+  if (!f.place) errs.place = "Please select a place.";
+  if (!f.start_date) errs.start_date = "Start date/time is required.";
+  if (!f.end_date) errs.end_date = "End date/time is required.";
+  else if (f.start_date && new Date(f.end_date) <= new Date(f.start_date))
+    errs.end_date = "End must be after start.";
+  return errs;
+};
+
+const validatePlace = (p) => {
+  const errs = {};
+  if (!p.place.trim()) errs.place = "Place name is required.";
+  const cap = Number(p.capacity);
+  if (!p.capacity && p.capacity !== 0) errs.capacity = "Capacity is required.";
+  else if (!Number.isInteger(cap) || cap < 1)
+    errs.capacity = "Capacity must be a whole number ≥ 1.";
+  if (!p.type) errs.type = "Please select a place type.";
+  return errs;
+};
 
 // ─── helpers ─────────────────────────────────────────────────
 const fmt = (isoStr) => {
@@ -136,6 +161,7 @@ const ReservationAdmin = () => {
   // ── Reservation handlers ──────────────────────────────────
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    clearResFieldError(e.target.name);
     setFormError("");
   };
 
@@ -166,21 +192,28 @@ const ReservationAdmin = () => {
     setEditing(null);
     setForm(blankForm);
     setFormError("");
+    clearResErrors();
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // ── Reservation submit logic ───────────────────────────────
+  const doReservationSubmit = async (f) => {
     setFormError("");
     try {
-      if (editing)
-        await reservationService.updateReservation(editing._id, form);
-      else await reservationService.createReservation(form);
+      if (editing) await reservationService.updateReservation(editing._id, f);
+      else await reservationService.createReservation(f);
       cancelForm();
       await load();
     } catch (e) {
       setFormError(e.message);
     }
   };
+
+  const {
+    errors: resErrors,
+    trySubmit: tryResSubmit,
+    clearFieldError: clearResFieldError,
+    clearErrors: clearResErrors,
+  } = useFormErrors(validateReservation, doReservationSubmit);
 
   const handleDelete = async (res) => {
     if (!window.confirm(`Delete reservation for "${res.place?.place}"?`))
@@ -222,6 +255,7 @@ const ReservationAdmin = () => {
     setEditingPlace(null);
     setPlaceForm(blankPlace);
     setPlaceError("");
+    clearPlaceErrors();
   };
 
   const setPlaceRestriction = (field, value) => {
@@ -243,22 +277,26 @@ const ReservationAdmin = () => {
     });
   };
 
-  const handlePlaceSubmit = async (e) => {
-    e.preventDefault();
+  // ── Place submit logic ──────────────────────────────────
+  const doPlaceSubmit = async (p) => {
     setPlaceError("");
     try {
       if (editingPlace)
-        await reservationService.updateAcademicPlace(
-          editingPlace._id,
-          placeForm,
-        );
-      else await reservationService.createAcademicPlace(placeForm);
+        await reservationService.updateAcademicPlace(editingPlace._id, p);
+      else await reservationService.createAcademicPlace(p);
       cancelPlaceForm();
       await load();
     } catch (e) {
       setPlaceError(e.message);
     }
   };
+
+  const {
+    errors: placeErrors,
+    trySubmit: tryPlaceSubmit,
+    clearFieldError: clearPlaceFieldError,
+    clearErrors: clearPlaceErrors,
+  } = useFormErrors(validatePlace, doPlaceSubmit);
 
   const handlePlaceDelete = async (p) => {
     if (
@@ -276,11 +314,34 @@ const ReservationAdmin = () => {
   };
 
   const handleToggleAvailability = async (p) => {
+    const becomingUnavailable = !p.unavailable;
     try {
       await reservationService.updateAcademicPlace(p._id, {
         ...p,
-        unavailable: !p.unavailable,
+        unavailable: becomingUnavailable,
       });
+      if (becomingUnavailable) {
+        const { cancelled } = reservationService.cancelReservationsForPlace(
+          p._id,
+        );
+        if (cancelled > 0) {
+          setError(
+            `"${p.place}" disabled — ${cancelled} reservation${cancelled !== 1 ? "s" : ""} cancelled.`,
+          );
+          setTimeout(() => setError(""), 5000);
+        }
+      } else {
+        // Re-enabling: restore reservations that were system-cancelled for this place
+        const { restored } = reservationService.restoreReservationsForPlace(
+          p._id,
+        );
+        if (restored > 0) {
+          setError(
+            `"${p.place}" enabled — ${restored} reservation${restored !== 1 ? "s" : ""} restored.`,
+          );
+          setTimeout(() => setError(""), 5000);
+        }
+      }
       await load();
     } catch (e) {
       setPlaceError(e.message);
@@ -343,8 +404,16 @@ const ReservationAdmin = () => {
                 {editing ? "Edit Reservation" : "New Reservation"}
               </h3>
               {formError && <div className="res-error">{formError}</div>}
-              <form onSubmit={handleSubmit} className="res-form">
-                <div className="res-field">
+              <form
+                onSubmit={(e) => tryResSubmit(e, form)}
+                className="res-form"
+                noValidate
+              >
+                <div
+                  className={
+                    resErrors.place ? "res-field field-has-error" : "res-field"
+                  }
+                >
                   <label className="res-label" htmlFor="res-place">
                     Place
                   </label>
@@ -354,7 +423,6 @@ const ReservationAdmin = () => {
                     className="res-select"
                     value={form.place}
                     onChange={handleChange}
-                    required
                   >
                     <option value="">Select a place…</option>
                     {places
@@ -374,6 +442,7 @@ const ReservationAdmin = () => {
                         );
                       })}
                   </select>
+                  <FieldError message={resErrors.place} />
                 </div>
 
                 {/* Show selected place's restrictions as a hint */}
@@ -440,7 +509,13 @@ const ReservationAdmin = () => {
                   />
                 </div>
                 <div className="res-row">
-                  <div className="res-field">
+                  <div
+                    className={
+                      resErrors.start_date
+                        ? "res-field field-has-error"
+                        : "res-field"
+                    }
+                  >
                     <label className="res-label" htmlFor="res-start">
                       Start
                     </label>
@@ -451,10 +526,16 @@ const ReservationAdmin = () => {
                       className="res-input"
                       value={form.start_date}
                       onChange={handleChange}
-                      required
                     />
+                    <FieldError message={resErrors.start_date} />
                   </div>
-                  <div className="res-field">
+                  <div
+                    className={
+                      resErrors.end_date
+                        ? "res-field field-has-error"
+                        : "res-field"
+                    }
+                  >
                     <label className="res-label" htmlFor="res-end">
                       End
                     </label>
@@ -465,8 +546,8 @@ const ReservationAdmin = () => {
                       className="res-input"
                       value={form.end_date}
                       onChange={handleChange}
-                      required
                     />
+                    <FieldError message={resErrors.end_date} />
                   </div>
                 </div>
                 <div className="res-form-actions">
@@ -559,7 +640,13 @@ const ReservationAdmin = () => {
                 return (
                   <div
                     key={res._id}
-                    className={`res-card ${isPast ? "res-card--past" : "res-card--upcoming"}`}
+                    className={`res-card ${
+                      res.status === "cancelled"
+                        ? "res-card--cancelled"
+                        : isPast
+                          ? "res-card--past"
+                          : "res-card--upcoming"
+                    }`}
                   >
                     <div className="res-card-left">
                       <span className="res-place-badge">
@@ -580,26 +667,38 @@ const ReservationAdmin = () => {
                     </div>
                     <div className="res-card-right">
                       <span
-                        className={`res-status ${isPast ? "res-status--past" : "res-status--upcoming"}`}
+                        className={`res-status ${
+                          res.status === "cancelled"
+                            ? "res-status--cancelled"
+                            : isPast
+                              ? "res-status--past"
+                              : "res-status--upcoming"
+                        }`}
                       >
-                        {isPast ? "Past" : "Upcoming"}
+                        {res.status === "cancelled"
+                          ? `Cancelled${res.cancelReason ? ` — ${res.cancelReason}` : ""}`
+                          : isPast
+                            ? "Past"
+                            : "Upcoming"}
                       </span>
-                      {canEdit(res) && !isReadOnly && (
-                        <div className="res-actions">
-                          <button
-                            className="res-btn res-btn--sm res-btn--ghost"
-                            onClick={() => openEdit(res)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="res-btn res-btn--sm res-btn--danger"
-                            onClick={() => handleDelete(res)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
+                      {canEdit(res) &&
+                        !isReadOnly &&
+                        res.status !== "cancelled" && (
+                          <div className="res-actions">
+                            <button
+                              className="res-btn res-btn--sm res-btn--ghost"
+                              onClick={() => openEdit(res)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="res-btn res-btn--sm res-btn--danger"
+                              onClick={() => handleDelete(res)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
                     </div>
                   </div>
                 );
@@ -632,47 +731,76 @@ const ReservationAdmin = () => {
               <h3 className="res-form-title">
                 {editingPlace ? "Edit Place" : "New Place"}
               </h3>
-              <form onSubmit={handlePlaceSubmit} className="res-form">
+              <form
+                onSubmit={(e) => tryPlaceSubmit(e, placeForm)}
+                className="res-form"
+                noValidate
+              >
                 {/* Basic info */}
                 <div className="res-row">
-                  <div className="res-field">
+                  <div
+                    className={
+                      placeErrors.place
+                        ? "res-field field-has-error"
+                        : "res-field"
+                    }
+                  >
                     <label className="res-label">Name *</label>
                     <input
                       className="res-input"
                       value={placeForm.place}
-                      onChange={(e) =>
-                        setPlaceForm({ ...placeForm, place: e.target.value })
-                      }
+                      onChange={(e) => {
+                        setPlaceForm({ ...placeForm, place: e.target.value });
+                        clearPlaceFieldError("place");
+                      }}
                       placeholder="e.g. Library, Science Lab…"
-                      required
                     />
+                    <FieldError message={placeErrors.place} />
                   </div>
-                  <div className="res-field">
+                  <div
+                    className={
+                      placeErrors.capacity
+                        ? "res-field field-has-error"
+                        : "res-field"
+                    }
+                  >
                     <label className="res-label">Capacity *</label>
                     <input
                       className="res-input"
                       type="number"
                       min="1"
                       value={placeForm.capacity}
-                      onChange={(e) =>
-                        setPlaceForm({ ...placeForm, capacity: e.target.value })
-                      }
+                      onChange={(e) => {
+                        setPlaceForm({
+                          ...placeForm,
+                          capacity: e.target.value,
+                        });
+                        clearPlaceFieldError("capacity");
+                      }}
                       placeholder="e.g. 30"
-                      required
                     />
+                    <FieldError message={placeErrors.capacity} />
                   </div>
                 </div>
                 <div className="res-row">
-                  <div className="res-field">
-                    <label className="res-label">Type</label>
+                  <div
+                    className={
+                      placeErrors.type
+                        ? "res-field field-has-error"
+                        : "res-field"
+                    }
+                  >
+                    <label className="res-label">Type *</label>
                     <input
                       className="res-input"
                       value={placeForm.type}
-                      onChange={(e) =>
-                        setPlaceForm({ ...placeForm, type: e.target.value })
-                      }
+                      onChange={(e) => {
+                        setPlaceForm({ ...placeForm, type: e.target.value });
+                        clearPlaceFieldError("type");
+                      }}
                       placeholder="e.g. Lab, Classroom, Hall…"
                     />
+                    <FieldError message={placeErrors.type} />
                   </div>
                   <div className="res-field">
                     <label className="res-label">Status</label>

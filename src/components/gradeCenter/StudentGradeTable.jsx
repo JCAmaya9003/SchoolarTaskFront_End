@@ -2,7 +2,8 @@
  * StudentGradeTable Component
  *
  * Panel B for Admin/Teacher: grid of students × evaluations.
- * Allows adding, editing, and annulling a score per student per evaluation.
+ * Grading is LOCKED until the evaluation plan is approved.
+ * Shows "% Done" column — accumulated weight of graded evaluations per student.
  */
 
 import { useState, useEffect, useMemo } from "react";
@@ -14,18 +15,21 @@ const StudentGradeTable = ({
   subject,
   evaluations,
   currentUser,
+  planStatus, // "draft" | "approved" — passed from EvaluationAdmin
 }) => {
   const [students, setStudents] = useState([]);
   const [grades, setGrades] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(null); // { studentEmail, evaluationId }
+  const [editing, setEditing] = useState(null);
   const [editScore, setEditScore] = useState("");
   const [error, setError] = useState("");
 
   // ── Filters ──────────────────────────────────────────────
   const [filterFirst, setFilterFirst] = useState("");
   const [filterLast, setFilterLast] = useState("");
-  const [sortAvg, setSortAvg] = useState(""); // "" | "asc" | "desc"
+  const [sortAvg, setSortAvg] = useState("");
+
+  const planApproved = planStatus === "approved";
 
   const load = async () => {
     setLoading(true);
@@ -45,7 +49,7 @@ const StudentGradeTable = ({
 
   useEffect(() => {
     load();
-  }, [grade, section, subject]);
+  }, [grade, section, subject]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Build lookup: [studentEmail][evaluationId] → grade record
   const scoreMap = {};
@@ -55,6 +59,7 @@ const StudentGradeTable = ({
   });
 
   const startEdit = (studentEmail, evaluationId, existingRecord) => {
+    if (!planApproved) return; // guard
     setEditing({ studentEmail, evaluationId });
     setEditScore(existingRecord ? String(existingRecord.score) : "");
     setError("");
@@ -77,10 +82,8 @@ const StudentGradeTable = ({
     try {
       const existing = scoreMap[editing.studentEmail]?.[editing.evaluationId];
       if (existing && !existing.annulled) {
-        // Update existing
         await gradeService.updateGrade(existing._id, { score });
       } else {
-        // Create new
         await gradeService.createGrade({
           evaluationId: editing.evaluationId,
           studentEmail: editing.studentEmail,
@@ -154,6 +157,26 @@ const StudentGradeTable = ({
       : `~${((sum / covered) * 100).toFixed(1)}`;
   };
 
+  // % Done: sum of weights for evaluations that have a non-annulled grade
+  const calcCoveredPct = (studentEmail) => {
+    return evaluations.reduce((sum, ev) => {
+      const rec = scoreMap[studentEmail]?.[ev._id];
+      return sum + (rec && !rec.annulled ? ev.percentage : 0);
+    }, 0);
+  };
+
+  // Accumulated weighted score: sum of (score * percentage/100) for graded evals
+  const calcAccumulated = (studentEmail) => {
+    let sum = 0;
+    evaluations.forEach((ev) => {
+      const rec = scoreMap[studentEmail]?.[ev._id];
+      if (rec && !rec.annulled) {
+        sum += rec.score * (ev.percentage / 100);
+      }
+    });
+    return sum;
+  };
+
   // ── Filtered + sorted student list ───────────────────────
   const displayedStudents = useMemo(() => {
     let list = [...students];
@@ -185,6 +208,40 @@ const StudentGradeTable = ({
   };
 
   if (loading) return <p className="sgt-loading">Loading students...</p>;
+
+  // ── Approval gate ─────────────────────────────────────────
+  if (!planApproved) {
+    return (
+      <div className="sgt-container">
+        <div className="sgt-header">
+          <h4>Student Grades</h4>
+        </div>
+        <div className="sgt-locked">
+          <svg
+            width="32"
+            height="32"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
+            />
+          </svg>
+          <p>
+            <strong>Grading is locked</strong>
+          </p>
+          <p className="sgt-locked-sub">
+            The evaluation plan must be complete (100%) and approved by an
+            administrator before grades can be entered.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="sgt-container">
@@ -240,12 +297,32 @@ const StudentGradeTable = ({
                     <div className="sgt-ev-pct">{ev.percentage}%</div>
                   </th>
                 ))}
+                <th className="sgt-th--done" title="% of plan graded">
+                  % Done
+                </th>
+                <th
+                  className="sgt-th--accum"
+                  title="Accumulated weighted score"
+                >
+                  Accum.
+                </th>
                 <th className="sgt-th--avg">Average</th>
               </tr>
             </thead>
             <tbody>
               {displayedStudents.map((student) => {
                 const avg = calcAverage(student.email);
+                const coveredPct = calcCoveredPct(student.email);
+                const accum = calcAccumulated(student.email);
+                const doneBadge =
+                  coveredPct === 100
+                    ? "sgt-done--full"
+                    : coveredPct >= 50
+                      ? "sgt-done--mid"
+                      : coveredPct > 0
+                        ? "sgt-done--low"
+                        : "sgt-done--zero";
+
                 return (
                   <tr key={student.email}>
                     <td className="sgt-td--name">
@@ -363,6 +440,29 @@ const StudentGradeTable = ({
                       );
                     })}
 
+                    {/* % Done column */}
+                    <td className={`sgt-td--done ${doneBadge}`}>
+                      <strong>{coveredPct}%</strong>
+                    </td>
+
+                    {/* Accumulated weighted score column */}
+                    <td className="sgt-td--accum">
+                      <span
+                        className={
+                          accum >= 70
+                            ? "sgt-done--full"
+                            : accum >= 50
+                              ? "sgt-done--mid"
+                              : accum > 0
+                                ? "sgt-done--low"
+                                : "sgt-done--zero"
+                        }
+                      >
+                        {accum > 0 ? accum.toFixed(2) : "—"}
+                      </span>
+                    </td>
+
+                    {/* Average column */}
                     <td
                       className={`sgt-td--avg ${avg !== null ? getScoreClass(parseFloat(avg)) : ""}`}
                     >

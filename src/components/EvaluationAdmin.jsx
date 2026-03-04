@@ -38,10 +38,11 @@ const EvaluationAdmin = () => {
 
   // ── ADMIN / TEACHER state ──────────────────────────────
   const [gradeSections, setGradeSections] = useState([]);
-  const [selectedSection, setSelectedSection] = useState(null); // { grade, section, subjects }
+  const [selectedSection, setSelectedSection] = useState(null);
   const [availableSubjects, setAvailableSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [evaluations, setEvaluations] = useState([]);
+  const [planStatus, setPlanStatus] = useState("draft"); // "draft" | "approved"
 
   // ── PARENT state ───────────────────────────────────────
   const [children, setChildren] = useState([]);
@@ -166,6 +167,7 @@ const EvaluationAdmin = () => {
     setSelectedSection(sec);
     setSelectedSubject(null);
     setEvaluations([]);
+    setPlanStatus("draft");
     setAvailableSubjects(sec.subjects || []);
   };
 
@@ -176,7 +178,13 @@ const EvaluationAdmin = () => {
       selectedSection.section,
       subject,
     );
+    const status = gradeService.getPlanStatus(
+      selectedSection.grade,
+      selectedSection.section,
+      subject,
+    );
     setEvaluations(evs);
+    setPlanStatus(status);
   };
 
   const refreshEvaluations = async () => {
@@ -299,8 +307,7 @@ const EvaluationAdmin = () => {
                     Back
                   </button>
                   <span>
-                    {selectedChild.firstName}'s grades {" "}
-                    {parentSelectedSubject}
+                    {selectedChild.firstName}'s grades {parentSelectedSubject}
                   </span>
                 </div>
                 <GradeReport
@@ -358,9 +365,7 @@ const EvaluationAdmin = () => {
                         {teacher.firstName} {teacher.lastName}
                       </div>
                     )}
-                    <div className="gc-subject-hint">
-                      Click to view grades
-                    </div>
+                    <div className="gc-subject-hint">Click to view grades</div>
                   </div>
                 );
               })}
@@ -520,7 +525,10 @@ const EvaluationAdmin = () => {
                 section={selectedSection.section}
                 subject={selectedSubject}
                 currentUser={currentUser}
-                onUpdate={refreshEvaluations}
+                onPlanStatusChange={(s) => {
+                  setPlanStatus(s);
+                  refreshEvaluations();
+                }}
               />
             </div>
             <div className="gc-panel">
@@ -530,6 +538,7 @@ const EvaluationAdmin = () => {
                 subject={selectedSubject}
                 evaluations={evaluations}
                 currentUser={currentUser}
+                planStatus={planStatus}
               />
             </div>
           </div>

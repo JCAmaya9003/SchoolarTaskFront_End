@@ -5,7 +5,7 @@
  * Shows evaluation plan, scores, weighted contribution, and running average.
  */
 
-const GradeReport = ({ evaluations, grades, subject, studentName }) => {
+const GradeReport = ({ evaluations, grades, studentName }) => {
   // Build a score map: evaluationId → grade record
   const scoreMap = {};
   grades.forEach((g) => {
@@ -89,6 +89,20 @@ const GradeReport = ({ evaluations, grades, subject, studentName }) => {
           })}
         </tbody>
         <tfoot>
+          {/* Accumulated contribution row */}
+          {coveredPct > 0 && (
+            <tr className="gr-footer gr-footer--accum">
+              <td colSpan={4}>
+                <strong>Accumulated so far:</strong>
+              </td>
+              <td
+                className={`gr-contrib gr-contrib--total ${scoreColor(earnedWeightedSum)}`}
+              >
+                <strong>{earnedWeightedSum.toFixed(1)}</strong>
+                <span className="gr-contrib-denom"> / {coveredPct} pts</span>
+              </td>
+            </tr>
+          )}
           <tr className="gr-footer">
             <td colSpan={2}>
               <strong>Total Plan: {totalPct}%</strong>

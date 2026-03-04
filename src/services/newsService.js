@@ -35,7 +35,7 @@ export const getAllNews = async () => {
     }
     */
     throw new Error(
-      "Backend mode not yet implemented. Set USE_BACKEND to false."
+      "Backend mode not yet implemented. Set USE_BACKEND to false.",
     );
   } else {
     // LOCALSTORAGE MODE
@@ -75,15 +75,35 @@ export const createNews = async (newsData) => {
     }
     */
     throw new Error(
-      "Backend mode not yet implemented. Set USE_BACKEND to false."
+      "Backend mode not yet implemented. Set USE_BACKEND to false.",
     );
   } else {
     // LOCALSTORAGE MODE
     const news = storageService.getItem(STORAGE_KEYS.NEWS) || [];
 
-    // Get user details from USERS storage
-    const users = storageService.getItem(STORAGE_KEYS.USERS) || [];
-    const user = users.find((u) => u.email === newsData.email);
+    // Look up user across all role-specific storage lists
+    // Admins are stored in USERS; teachers in TEACHERS; parents in PARENTS; students in STUDENTS
+    const allUsers = storageService.getItem(STORAGE_KEYS.USERS) || [];
+    const teachers = storageService.getItem(STORAGE_KEYS.TEACHERS) || [];
+
+    const user =
+      allUsers.find((u) => u.email === newsData.email) ||
+      teachers.find((u) => u.email === newsData.email);
+
+    // Determine effective role
+    const effectiveRole =
+      user?.role ||
+      (teachers.some((t) => t.email === newsData.email) ? "teacher" : null);
+
+    // Only admins and teachers can create news
+    if (
+      !effectiveRole ||
+      (effectiveRole !== "admin" && effectiveRole !== "teacher")
+    ) {
+      throw new Error(
+        "Permission denied: only admins and teachers can create news.",
+      );
+    }
 
     const newNews = {
       _id: String(Date.now()),
@@ -92,18 +112,12 @@ export const createNews = async (newsData) => {
       email: newsData.email,
       image: newsData.image || null,
       date: new Date().toISOString(),
-      // Include user object with user details
-      user: user
-        ? {
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-          }
-        : {
-            email: newsData.email,
-            firstName: "Unknown",
-            lastName: "User",
-          },
+      user: {
+        email: newsData.email,
+        firstName: user?.firstName || "Unknown",
+        lastName: user?.lastName || "User",
+        role: effectiveRole,
+      },
     };
 
     news.push(newNews);
@@ -150,7 +164,7 @@ export const updateNews = async (title, updatedData) => {
     }
     */
     throw new Error(
-      "Backend mode not yet implemented. Set USE_BACKEND to false."
+      "Backend mode not yet implemented. Set USE_BACKEND to false.",
     );
   } else {
     // LOCALSTORAGE MODE
@@ -224,7 +238,7 @@ export const deleteNews = async (email, title) => {
     }
     */
     throw new Error(
-      "Backend mode not yet implemented. Set USE_BACKEND to false."
+      "Backend mode not yet implemented. Set USE_BACKEND to false.",
     );
   } else {
     // LOCALSTORAGE MODE

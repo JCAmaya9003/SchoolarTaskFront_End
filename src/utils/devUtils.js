@@ -28,7 +28,7 @@ export const viewStorageData = () => {
     try {
       const data = JSON.parse(localStorage.getItem(key));
       console.log(`\n${key}:`, data);
-    } catch (e) {
+    } catch {
       console.log(`\n${key}:`, localStorage.getItem(key));
     }
   });

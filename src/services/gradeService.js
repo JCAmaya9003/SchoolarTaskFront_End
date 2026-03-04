@@ -929,7 +929,7 @@ export const updateEvaluation = async (id, updatedData) => {
 
 /**
  * Delete an evaluation (admin or assigned teacher only).
- * Warns if student grades exist for this evaluation.
+ * Also deletes ALL grades linked to this evaluation (including annulled).
  */
 export const deleteEvaluation = async (id) => {
   const user = authService.getCurrentUser();
@@ -952,22 +952,66 @@ export const deleteEvaluation = async (id) => {
   const idx = all.findIndex((e) => e._id === id);
   if (idx === -1) throw new Error("Evaluation not found");
 
-  // Check if any student grades reference this evaluation
+  // Delete ALL grades linked to this evaluation (including annulled ones)
   const grades = storageService.getItem(STORAGE_KEYS.GRADES) || [];
-  const linkedGrades = grades.filter(
-    (g) => g.evaluationId === id && !g.annulled,
-  );
-  if (linkedGrades.length > 0) {
-    throw new Error(
-      `Cannot delete this evaluation — ${linkedGrades.length} student grade(s) are linked to it. Annul or delete those grades first.`,
-    );
-  }
+  const cleanedGrades = grades.filter((g) => g.evaluationId !== id);
+  storageService.setItem(STORAGE_KEYS.GRADES, cleanedGrades);
 
+  // Remove evaluation
   storageService.setItem(
     STORAGE_KEYS.EVALUATIONS,
     all.filter((e) => e._id !== id),
   );
   return { message: "Evaluation deleted successfully" };
+};
+
+// ═══════════════════════════════════════════════════════════
+// EVALUATION PLAN APPROVAL
+// Storage key: "evaluation_plans" → { [grade-section-subject]: "draft" | "approved" }
+// ═══════════════════════════════════════════════════════════
+
+const planKey = (grade, section, subject) => `${grade}-${section}-${subject}`;
+
+/**
+ * Get the approval status of an evaluation plan.
+ * @returns {"draft" | "approved"}
+ */
+export const getPlanStatus = (grade, section, subject) => {
+  const plans = storageService.getItem("evaluation_plans") || {};
+  return plans[planKey(grade, section, subject)] || "draft";
+};
+
+/**
+ * Approve an evaluation plan (admin only).
+ * Once approved, teachers can no longer modify the plan.
+ */
+export const approvePlan = (grade, section, subject) => {
+  const user = authService.getCurrentUser();
+  if (!user || user.role !== "admin") {
+    throw new Error(
+      "Permission denied: Only admins can approve evaluation plans",
+    );
+  }
+  const plans = storageService.getItem("evaluation_plans") || {};
+  plans[planKey(grade, section, subject)] = "approved";
+  storageService.setItem("evaluation_plans", plans);
+  return { status: "approved" };
+};
+
+/**
+ * Revert an approved plan back to draft (admin only).
+ */
+export const revertPlanToDraft = (grade, section, subject) => {
+  const user = authService.getCurrentUser();
+  if (!user || user.role !== "admin") {
+    throw new Error(
+      "Permission denied: Only admins can revert evaluation plans",
+    );
+  }
+  const plans = storageService.getItem("evaluation_plans") || {};
+  plans[planKey(grade, section, subject)] = "draft";
+  storageService.setItem("evaluation_plans", plans);
+  return { status: "draft" };
 };
 
 // ═══════════════════════════════════════════════════════════

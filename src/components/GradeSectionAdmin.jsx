@@ -3,15 +3,30 @@
  */
 import { useState, useEffect, useCallback, useRef } from "react";
 import useFetch from "../hooks/UseFetch";
-import FormInput from "./FormInput";
+import useFormErrors from "../hooks/useFormErrors";
+import FieldError from "./FieldError";
 import * as gradeService from "../services/gradeService";
 import "../assets/AdminPanel.css";
+import "../assets/form.css";
+
+// ── Validation ───────────────────────────────────────────────
+const validateGradeSection = ({ grade, section, subjects }) => {
+  const errs = {};
+  if (!grade) errs.grade = "Please select a grade (1–12).";
+  if (!section.trim()) {
+    errs.section = "Section is required.";
+  } else if (!/^[A-Z]$/.test(section)) {
+    errs.section = "Section must be a single letter (A–Z).";
+  }
+  if (!subjects || subjects.length === 0)
+    errs.subjects = "Select at least one subject for this grade section.";
+  return errs;
+};
 
 const GradeSectionAdmin = () => {
   const [gradeSections, setGradeSections] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [editingSection, setEditingSection] = useState(null);
-  const [isSubjectRequired, setIsSubjectRequired] = useState(false);
   const formCardRef = useRef(null);
   const [formData, setFormData] = useState({
     grade: "",
@@ -37,7 +52,16 @@ const GradeSectionAdmin = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((p) => ({ ...p, [name]: value }));
+    if (name === "section") {
+      const letter = value
+        .replace(/[^a-zA-Z]/g, "")
+        .slice(0, 1)
+        .toUpperCase();
+      setFormData((p) => ({ ...p, section: letter }));
+    } else {
+      setFormData((p) => ({ ...p, [name]: value }));
+    }
+    clearFieldError(name);
   };
 
   const handleCheckbox = (e) => {
@@ -48,6 +72,7 @@ const GradeSectionAdmin = () => {
         ? [...p.subjects, value]
         : p.subjects.filter((s) => s !== value),
     }));
+    clearFieldError("subjects");
   };
 
   const handleEdit = (gs) => {
@@ -57,6 +82,7 @@ const GradeSectionAdmin = () => {
       section: gs.section,
       subjects: gs.subjects || [],
     });
+    clearErrors();
     setTimeout(
       () =>
         formCardRef.current?.scrollIntoView({
@@ -70,6 +96,7 @@ const GradeSectionAdmin = () => {
   const handleCancelEdit = () => {
     setEditingSection(null);
     setFormData({ grade: "", section: "", subjects: [] });
+    clearErrors();
   };
 
   const handleDelete = async (grade, section) => {
@@ -82,30 +109,35 @@ const GradeSectionAdmin = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (formData.subjects.length === 0) {
-      setIsSubjectRequired(true);
-      return;
-    }
-    setIsSubjectRequired(false);
-    try {
-      if (editingSection) {
-        await gradeService.updateGradeSection(
-          editingSection.grade,
-          editingSection.section,
-          { subjects: formData.subjects },
-        );
-        setEditingSection(null);
-      } else {
-        await gradeService.createGradeSection(formData);
+  // ── Submit logic ─────────────────────────────────────────────
+  const doSubmit = useCallback(
+    async (data) => {
+      try {
+        if (editingSection) {
+          await gradeService.updateGradeSection(
+            editingSection.grade,
+            editingSection.section,
+            { subjects: data.subjects },
+          );
+          setEditingSection(null);
+        } else {
+          await gradeService.createGradeSection(data);
+        }
+        setFormData({ grade: "", section: "", subjects: [] });
+        clearErrors();
+        refetch();
+      } catch (err) {
+        alert("Error: " + err.message);
       }
-      setFormData({ grade: "", section: "", subjects: [] });
-      refetch();
-    } catch (err) {
-      alert("Error: " + err.message);
-    }
-  };
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [editingSection, refetch],
+  );
+
+  const { errors, trySubmit, clearFieldError, clearErrors } = useFormErrors(
+    validateGradeSection,
+    doSubmit,
+  );
 
   return (
     <div className="apanel">
@@ -116,27 +148,47 @@ const GradeSectionAdmin = () => {
             ? `Editing Grade ${editingSection.grade}‑${editingSection.section}`
             : "New Grade Section"}
         </h3>
-        <form onSubmit={handleSubmit} className="apanel-form">
+        <form
+          onSubmit={(e) => trySubmit(e, formData)}
+          className="apanel-form"
+          noValidate
+        >
           <div className="apanel-row">
-            <FormInput
-              name="grade"
-              label="Grade (1–12)"
-              value={formData.grade}
-              onChange={handleChange}
-              type="number"
-              min="1"
-              max="12"
-              required
-              disabled={!!editingSection}
-            />
-            <FormInput
-              name="section"
-              label="Section"
-              value={formData.section}
-              onChange={handleChange}
-              required
-              disabled={!!editingSection}
-            />
+            <div>
+              <label className="apanel-label">Grade *</label>
+              <select
+                name="grade"
+                className="apanel-input"
+                value={formData.grade}
+                onChange={handleChange}
+                required
+                disabled={!!editingSection}
+              >
+                <option value="">Select grade…</option>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
+              </select>
+              <FieldError message={errors.grade} />
+            </div>
+            <div>
+              <label className="apanel-label">Section *</label>
+              <input
+                name="section"
+                className="apanel-input"
+                value={formData.section}
+                onChange={handleChange}
+                placeholder="e.g. A"
+                maxLength={1}
+                pattern="[A-Za-z]"
+                required
+                disabled={!!editingSection}
+                style={{ textTransform: "uppercase" }}
+              />
+              <FieldError message={errors.section} />
+            </div>
           </div>
 
           <div className="apanel-field">
@@ -165,9 +217,7 @@ const GradeSectionAdmin = () => {
                 })}
               </div>
             )}
-            {isSubjectRequired && (
-              <p className="apanel-error">Select at least one subject.</p>
-            )}
+            <FieldError message={errors.subjects} />
           </div>
 
           <div className="apanel-actions">

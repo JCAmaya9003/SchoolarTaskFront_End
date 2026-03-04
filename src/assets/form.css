@@ -141,10 +141,58 @@ form .form-actions {
     padding: var(--space-8);
     border-radius: var(--radius-md);
   }
-  form button[type="submit"],
+    form button[type="submit"],
   form button[type="button"] {
     align-self: stretch;
     width: 100%;
     justify-content: center;
   }
+}
+
+/* ── Inline field error (FieldError component) ─────────────────── */
+.field-error {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--color-danger-text, #dc2626);
+  margin: 3px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.field-error::before {
+  content: "⚠";
+  font-size: 0.7em;
+}
+
+/* Input / select highlighted when its field has an error */
+.field-has-error input,
+.field-has-error select,
+.field-has-error textarea {
+  border-color: var(--color-danger-border, #fca5a5) !important;
+}
+.field-has-error input:focus,
+.field-has-error select:focus,
+.field-has-error textarea:focus {
+  border-color: var(--color-danger, #ef4444) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+/* Error summary banner shown at top of form on failed submit */
+.form-error-banner {
+  background: var(--color-danger-bg, #fef2f2);
+  border: 1px solid var(--color-danger-border, #fca5a5);
+  border-radius: var(--radius-md, 6px);
+  padding: var(--space-4, 12px) var(--space-5, 16px);
+  color: var(--color-danger-text, #dc2626);
+  font-size: var(--text-sm, 0.875rem);
+}
+.form-error-banner strong {
+  display: block;
+  margin-bottom: 4px;
+}
+.form-error-banner ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.form-error-banner li {
+  margin: 2px 0;
 }

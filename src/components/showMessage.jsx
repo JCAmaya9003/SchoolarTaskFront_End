@@ -8,10 +8,16 @@ const ShowMessage = ({ message, onOpenDetail }) => {
   return (
     <div
       className="news-card news-card-clickable"
-      onClick={() => onOpenDetail && onOpenDetail(message)}
+      onClick={() => onOpenDetail?.(message)}
       title="Click to read full article"
-      style={{ cursor: "pointer" }}
     >
+      {message.image && (
+        <img
+          src={message.image}
+          alt={message.title}
+          className="news-card-img"
+        />
+      )}
       <div className="news-card-body">
         <h3 className="news-card-title">{message.title}</h3>
         <p className="news-card-content">{message.content}</p>

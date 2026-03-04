@@ -8,10 +8,39 @@ import useFetch from "../hooks/UseFetch";
 import usePost from "../hooks/UsePost";
 import useUpdate from "../hooks/UseUpdate";
 import useDelete from "../hooks/UseDelete";
+import useFormErrors from "../hooks/useFormErrors";
 import FormInput from "./FormInput";
+import PhoneInput from "./PhoneInput";
+import FieldError from "./FieldError";
+import useCountries from "../hooks/useCountries";
+import useToast from "../hooks/useToast";
+import Toast from "./Toast";
+import UserInfoModal from "./UserInfoModal";
 import * as userService from "../services/userService";
 import "../assets/form.css";
 import "../assets/UserPanel.css";
+
+// ── Validation ───────────────────────────────────────────────
+const validateParent = (fd) => {
+  const errs = {};
+  if (!fd.firstName.trim()) errs.firstName = "First name is required.";
+  if (!fd.lastName.trim()) errs.lastName = "Last name is required.";
+  if (!fd.email.trim()) {
+    errs.email = "Email is required.";
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fd.email)) {
+    errs.email = "Enter a valid email address.";
+  }
+  if (!fd.password) errs.password = "Password is required.";
+  if (!fd.birth_date) errs.birth_date = "Date of birth is required.";
+  if (!fd.gender) errs.gender = "Please select a gender.";
+  if (!fd.nationality) errs.nationality = "Nationality is required.";
+  if (!fd.address?.trim()) errs.address = "Address is required.";
+  if (!fd.phone) errs.phone = "Phone number is required.";
+  if (!fd.work_phone) errs.work_phone = "Work phone is required.";
+  if (!fd.work_place?.trim()) errs.work_place = "Work place is required.";
+  if (!fd.profession?.trim()) errs.profession = "Profession is required.";
+  return errs;
+};
 
 const emptyForm = {
   firstName: "",
@@ -23,7 +52,9 @@ const emptyForm = {
   gender: "",
   address: "",
   nationality: "",
+  phoneDialCode: "+1",
   phone: "",
+  workPhoneDialCode: "+1",
   work_phone: "",
   work_place: "",
   profession: "",
@@ -34,8 +65,14 @@ const ParentAdmin = () => {
   const [students, setStudents] = useState([]);
   const [editingParent, setEditingParent] = useState(null);
   const [formData, setFormData] = useState(emptyForm);
+  const [formKey, setFormKey] = useState(0);
+  const [pendingDeleteEmail, setPendingDeleteEmail] = useState(null);
+  const [viewingParent, setViewingParent] = useState(null);
   const formCardRef = useRef(null);
   const [showPwd, setShowPwd] = useState(false);
+  const { toasts, showToast, dismissToast } = useToast();
+
+  const { countries, isLoading: loadingCountries } = useCountries();
 
   // ── Filters ────────────────────────────────────────────────
   const [filterFirstName, setFilterFirstName] = useState("");
@@ -61,6 +98,8 @@ const ParentAdmin = () => {
   const resetForm = () => {
     setEditingParent(null);
     setFormData(emptyForm);
+    setFormKey((k) => k + 1);
+    clearErrors();
   };
 
   // ── Filtered parent list ─────────────────────────────────────
@@ -99,34 +138,72 @@ const ParentAdmin = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    clearFieldError(name);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // ── Submit logic ─────────────────────────────────────────────
+  const doSubmit = async (fd) => {
+    // Serialize phones to '+dialCode digits' format
+    const phone = fd.phone ? `${fd.phoneDialCode || "+1"} ${fd.phone}` : "";
+    const work_phone = fd.work_phone
+      ? `${fd.workPhoneDialCode || "+1"} ${fd.work_phone}`
+      : "";
+    const payload = Object.assign({}, fd, {
+      phone,
+      work_phone,
+      phoneDialCode: undefined,
+      workPhoneDialCode: undefined,
+    });
     try {
       if (editingParent) {
         await updateData(
           userService.updateParent,
           editingParent.email,
-          formData,
+          payload,
         );
+        showToast(`${fd.firstName} ${fd.lastName} updated!`, "success");
       } else {
-        await postData(userService.createParent, formData);
+        await postData(userService.createParent, payload);
+        showToast(`Parent ${fd.firstName} ${fd.lastName} created!`, "success");
       }
       resetForm();
       refetch();
     } catch (err) {
-      alert("Error: " + err.message);
+      showToast("Error: " + err.message, "error");
     }
   };
 
+  const { errors, trySubmit, clearFieldError, clearErrors } = useFormErrors(
+    validateParent,
+    doSubmit,
+  );
+
   const handleDelete = async (email) => {
-    if (!window.confirm("Delete this parent?")) return;
+    // First click: flag this parent as pending-delete (shows inline confirm row)
+    if (pendingDeleteEmail !== email) {
+      setPendingDeleteEmail(email);
+      return;
+    }
+    // Second click (confirmed): delete parent + any linked students
+    setPendingDeleteEmail(null);
     try {
+      const linkedStudents = students.filter((s) => s.parent_email === email);
+      // Cascade: delete each linked student first
+      for (const s of linkedStudents) {
+        await deleteData(userService.deleteStudent, s.email);
+      }
       await deleteData(userService.deleteParent, email);
+      if (linkedStudents.length > 0) {
+        showToast(
+          `Parent deleted. ${linkedStudents.length} linked student(s) were also removed.`,
+          "success",
+        );
+      } else {
+        showToast("Parent deleted.", "success");
+      }
       refetch();
     } catch (err) {
-      alert("Error: " + err.message);
+      showToast("Error: " + err.message, "error");
     }
   };
 
@@ -152,33 +229,39 @@ const ParentAdmin = () => {
             ? `Editing ${editingParent.firstName} ${editingParent.lastName}`
             : "Add Parent"}
         </h3>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={(e) => trySubmit(e, formData)} noValidate>
           <div className="upanel-row">
-            <FormInput
-              name="firstName"
-              label="First Name"
-              value={formData.firstName}
-              onChange={handleChange}
-              required
-            />
-            <FormInput
-              name="lastName"
-              label="Last Name"
-              value={formData.lastName}
-              onChange={handleChange}
-              required
-            />
+            <div className={errors.firstName ? "field-has-error" : ""}>
+              <FormInput
+                name="firstName"
+                label="First Name"
+                value={formData.firstName}
+                onChange={handleChange}
+              />
+              <FieldError message={errors.firstName} />
+            </div>
+            <div className={errors.lastName ? "field-has-error" : ""}>
+              <FormInput
+                name="lastName"
+                label="Last Name"
+                value={formData.lastName}
+                onChange={handleChange}
+              />
+              <FieldError message={errors.lastName} />
+            </div>
           </div>
           <div className="upanel-row">
-            <FormInput
-              name="email"
-              label="Email"
-              value={formData.email}
-              onChange={handleChange}
-              type="email"
-              required
-              disabled={!!editingParent}
-            />
+            <div className={errors.email ? "field-has-error" : ""}>
+              <FormInput
+                name="email"
+                label="Email"
+                value={formData.email}
+                onChange={handleChange}
+                type="email"
+                disabled={!!editingParent}
+              />
+              <FieldError message={errors.email} />
+            </div>
             <div className="upanel-field">
               <label className="upanel-label">
                 Password{editingParent ? " (leave blank to keep)" : " *"}
@@ -254,78 +337,131 @@ const ParentAdmin = () => {
                   )}
                 </button>
               </div>
+              <FieldError message={errors.password} />
             </div>
           </div>
           <div className="upanel-row">
-            <FormInput
-              name="birth_date"
-              label="Date of Birth"
-              value={formData.birth_date}
-              onChange={handleChange}
-              type="date"
-              required
-            />
-            <FormInput
-              name="nationality"
-              label="Nationality"
-              value={formData.nationality}
-              onChange={handleChange}
-              required
-            />
+            <div className={errors.birth_date ? "field-has-error" : ""}>
+              <FormInput
+                name="birth_date"
+                label="Date of Birth"
+                value={formData.birth_date}
+                onChange={handleChange}
+                type="date"
+                required
+              />
+              <FieldError message={errors.birth_date} />
+            </div>
+            <div
+              className={
+                errors.nationality
+                  ? "upanel-field field-has-error"
+                  : "upanel-field"
+              }
+            >
+              <label className="upanel-label">Nationality *</label>
+              <select
+                name="nationality"
+                className="upanel-input"
+                value={formData.nationality}
+                onChange={handleChange}
+              >
+                <option value="">Select nationality…</option>
+                {!loadingCountries &&
+                  countries.map((c) => (
+                    <option key={c.code} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+              </select>
+              <FieldError message={errors.nationality} />
+            </div>
           </div>
           <div className="upanel-row">
-            <div>
-              <label>Gender</label>
+            <div
+              className={
+                errors.gender ? "upanel-field field-has-error" : "upanel-field"
+              }
+            >
+              <label className="upanel-label">Gender *</label>
               <select
                 name="gender"
+                className="upanel-input"
                 value={formData.gender}
                 onChange={handleChange}
-                required
               >
                 <option value="">Select</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
               </select>
+              <FieldError message={errors.gender} />
             </div>
-            <FormInput
-              name="address"
-              label="Address"
-              value={formData.address}
-              onChange={handleChange}
-              required
-            />
+            <div className={errors.address ? "field-has-error" : ""}>
+              <FormInput
+                name="address"
+                label="Address"
+                value={formData.address}
+                onChange={handleChange}
+                required
+              />
+              <FieldError message={errors.address} />
+            </div>
           </div>
           <div className="upanel-row">
-            <FormInput
-              name="phone"
-              label="Phone"
-              value={formData.phone}
-              onChange={handleChange}
-              required
-            />
-            <FormInput
-              name="work_phone"
-              label="Work Phone"
-              value={formData.work_phone}
-              onChange={handleChange}
-              required
-            />
+            <div>
+              <PhoneInput
+                key={`parent-phone-${formKey}`}
+                label="Phone"
+                dialCode={formData.phoneDialCode}
+                phone={formData.phone}
+                onChange={({ dialCode, phone }) =>
+                  setFormData((p) => ({ ...p, phoneDialCode: dialCode, phone }))
+                }
+                required
+                id="parent-phone"
+              />
+              <FieldError message={errors.phone} />
+            </div>
+            <div>
+              <PhoneInput
+                key={`parent-work-phone-${formKey}`}
+                label="Work Phone"
+                dialCode={formData.workPhoneDialCode}
+                phone={formData.work_phone}
+                onChange={({ dialCode, phone }) =>
+                  setFormData((p) => ({
+                    ...p,
+                    workPhoneDialCode: dialCode,
+                    work_phone: phone,
+                  }))
+                }
+                required
+                id="parent-work-phone"
+              />
+              <FieldError message={errors.work_phone} />
+            </div>
           </div>
           <div className="upanel-row">
-            <FormInput
-              name="work_place"
-              label="Work Place"
-              value={formData.work_place}
-              onChange={handleChange}
-              required
-            />
-            <FormInput
-              name="profession"
-              label="Profession"
-              value={formData.profession}
-              onChange={handleChange}
-              required
-            />
+            <div className={errors.work_place ? "field-has-error" : ""}>
+              <FormInput
+                name="work_place"
+                label="Work Place"
+                value={formData.work_place}
+                onChange={handleChange}
+                required
+              />
+              <FieldError message={errors.work_place} />
+            </div>
+            <div className={errors.profession ? "field-has-error" : ""}>
+              <FormInput
+                name="profession"
+                label="Profession"
+                value={formData.profession}
+                onChange={handleChange}
+                required
+              />
+              <FieldError message={errors.profession} />
+            </div>
           </div>
           <div className="upanel-actions">
             <button type="submit" className="btn btn-primary">
@@ -429,23 +565,63 @@ const ParentAdmin = () => {
                 )}
               </div>
               <div className="upanel-item-actions">
-                <button
-                  className="btn btn-info btn-sm"
-                  onClick={() => handleEdit(p)}
-                >
-                  Edit
-                </button>
-                <button
-                  className="btn btn-danger btn-sm"
-                  onClick={() => handleDelete(p.email)}
-                >
-                  Delete
-                </button>
+                {pendingDeleteEmail === p.email ? (
+                  <>
+                    <span
+                      style={{ fontSize: 12, color: "#B45309", marginRight: 4 }}
+                    >
+                      {students.some((s) => s.parent_email === p.email)
+                        ? "⚠ Linked students will also be deleted!"
+                        : "Confirm delete?"}
+                    </span>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => handleDelete(p.email)}
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => setPendingDeleteEmail(null)}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => setViewingParent(p)}
+                    >
+                      View
+                    </button>
+                    <button
+                      className="btn btn-info btn-sm"
+                      onClick={() => handleEdit(p)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => handleDelete(p.email)}
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
               </div>
             </li>
           ))}
         </ul>
       </div>
+      <Toast toasts={toasts} onDismiss={dismissToast} />
+      {viewingParent && (
+        <UserInfoModal
+          user={viewingParent}
+          type="parent"
+          onClose={() => setViewingParent(null)}
+        />
+      )}
     </div>
   );
 };

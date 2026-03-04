@@ -6,37 +6,38 @@ import { config } from "../utils/ConfigUtils";
 const GoogleLoad = () => {
   const { handleSaveToken } = useContext(AuthContext);
   const navigate = useNavigate();
-  const URL = config.backUrl; 
 
   const checkAuthAndFetchPermissions = async () => {
     try {
-      
-      const tokenValidationResponse = await fetch(`${config.backUrl}/api/users/validate-token`, {
-        method: "GET",
-        credentials: "include", 
-        headers: {
-          "Content-Type": "application/json",
+      const tokenValidationResponse = await fetch(
+        `${config.backUrl}/api/users/validate-token`,
+        {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
 
       if (tokenValidationResponse.ok) {
         const result = await tokenValidationResponse.json();
-        handleSaveToken(result.token); 
-        navigate("/home"); 
+        handleSaveToken(result.token);
+        navigate("/home");
       } else {
-        navigate("/"); 
+        navigate("/");
       }
     } catch (error) {
       console.error("Error during token validation:", error);
-      navigate("/"); 
+      navigate("/");
     }
   };
 
   useEffect(() => {
     checkAuthAndFetchPermissions();
-  }, []); 
+  }, []);
 
-  return null; 
+  return null;
 };
 
 export default GoogleLoad;

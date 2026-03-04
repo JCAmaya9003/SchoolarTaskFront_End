@@ -5,10 +5,9 @@
  * Updated to use authService with dual-mode support.
  */
 
-import React, { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import * as authService from "../services/authService";
 import News from "./News";
 import ShowNews from "./ShowNews";
 import "../assets/home.css";
@@ -18,17 +17,11 @@ import EvaluationAdmin from "../components/EvaluationAdmin";
 import SubjectAdmin from "../components/SubjectAdmin";
 import GradeSectionAdmin from "../components/GradeSectionAdmin";
 
-/* PRESERVED FOR FUTURE USE:
-import { config } from "../utils/ConfigUtils";
-import { jwtDecode } from "jwt-decode"
-*/
-
 const Home = () => {
   const navigate = useNavigate();
   const {
     user,
     role,
-    permissions: contextPermissions,
     isLoading: authLoading,
     clearAuth,
   } = useContext(AuthContext);
@@ -136,6 +129,7 @@ const Home = () => {
     } else if (role.teacher) {
       links.push(
         { href: "#show-news", text: "News" },
+        { href: "#news", text: "Manage News" },
         { href: "#manage-grades", text: "Manage Grades" },
         { href: "#reservations", text: "Reservations" },
       );

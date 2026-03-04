@@ -1,16 +1,33 @@
 /**
  * SubjectAdmin — Create and manage subjects.
+ * + Submit-time custom validation (useFormErrors).
  */
 import { useState, useEffect, useCallback, useRef } from "react";
 import useFetch from "../hooks/UseFetch";
 import FormInput from "./FormInput";
+import useFormErrors from "../hooks/useFormErrors";
+import FieldError from "./FieldError";
 import * as gradeService from "../services/gradeService";
 import "../assets/AdminPanel.css";
+import "../assets/form.css";
+
+// ── Validation ────────────────────────────────────────────────────
+const validateSubject = ({ name }) => {
+  const errs = {};
+  if (!name.trim()) {
+    errs.name = "Subject name is required.";
+  } else if (name.trim().length < 2) {
+    errs.name = "Subject name must be at least 2 characters.";
+  } else if (name.trim().length > 60) {
+    errs.name = "Subject name must be 60 characters or fewer.";
+  }
+  return errs;
+};
 
 const SubjectAdmin = () => {
   const [subjects, setSubjects] = useState([]);
   const [formData, setFormData] = useState({ name: "" });
-  const [editingSubject, setEditingSubject] = useState(null); // name of subject being edited
+  const [editingSubject, setEditingSubject] = useState(null);
   const formCardRef = useRef(null);
 
   const fetchSubjects = useCallback(() => gradeService.getSubjects(), []);
@@ -20,48 +37,66 @@ const SubjectAdmin = () => {
     if (data) setSubjects(data);
   }, [data]);
 
-  const handleChange = useCallback((e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  }, []);
+  const handleChange = useCallback(
+    (e) => {
+      const { name, value } = e.target;
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      clearFieldError(name);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
-  const handleSubmit = useCallback(
-    async (e) => {
-      e.preventDefault();
+  // ── Submit logic ─────────────────────────────────────────────
+  const doSubmit = useCallback(
+    async (data) => {
       try {
         if (editingSubject) {
-          // Rename: delete old, create new
           await gradeService.deleteSubject(editingSubject);
-          await gradeService.createSubject(formData);
+          await gradeService.createSubject(data);
           setEditingSubject(null);
         } else {
-          await gradeService.createSubject(formData);
+          await gradeService.createSubject(data);
         }
         setFormData({ name: "" });
+        clearErrors();
         refetch();
       } catch (err) {
         alert("Error: " + err.message);
       }
     },
-    [formData, editingSubject, refetch],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [editingSubject, refetch],
   );
 
-  const handleEdit = useCallback((name) => {
-    setEditingSubject(name);
-    setFormData({ name });
-    setTimeout(
-      () =>
-        formCardRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        }),
-      50,
-    );
-  }, []);
+  const { errors, trySubmit, clearFieldError, clearErrors } = useFormErrors(
+    validateSubject,
+    doSubmit,
+  );
+
+  const handleEdit = useCallback(
+    (name) => {
+      setEditingSubject(name);
+      setFormData({ name });
+      clearErrors();
+      setTimeout(
+        () =>
+          formCardRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          }),
+        50,
+      );
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   const handleCancelEdit = useCallback(() => {
     setEditingSubject(null);
     setFormData({ name: "" });
+    clearErrors();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleDelete = useCallback(
@@ -84,14 +119,21 @@ const SubjectAdmin = () => {
         <h3 className="apanel-form-title">
           {editingSubject ? `Editing "${editingSubject}"` : "Add Subject"}
         </h3>
-        <form onSubmit={handleSubmit} className="apanel-form">
-          <FormInput
-            name="name"
-            label="Subject Name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
+        <form
+          onSubmit={(e) => trySubmit(e, formData)}
+          className="apanel-form"
+          noValidate
+        >
+          <div className={errors.name ? "field-has-error" : ""}>
+            <FormInput
+              name="name"
+              label="Subject Name"
+              value={formData.name}
+              onChange={handleChange}
+            />
+            <FieldError message={errors.name} />
+          </div>
+
           <div style={{ display: "flex", gap: 8 }}>
             <button type="submit" className="btn btn-primary">
               {editingSubject ? "Save" : "Add Subject"}

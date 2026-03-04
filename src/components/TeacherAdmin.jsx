@@ -8,11 +8,49 @@ import useFetch from "../hooks/UseFetch";
 import usePost from "../hooks/UsePost";
 import useUpdate from "../hooks/UseUpdate";
 import useDelete from "../hooks/UseDelete";
+import useFormErrors from "../hooks/useFormErrors";
 import FormInput from "./FormInput";
+import PhoneInput from "./PhoneInput";
+import FieldError from "./FieldError";
+import useCountries from "../hooks/useCountries";
 import * as userService from "../services/userService";
 import * as gradeService from "../services/gradeService";
+import UserInfoModal from "./UserInfoModal";
 import "../assets/form.css";
 import "../assets/UserPanel.css";
+
+// ── Validation ───────────────────────────────────────────────
+const validateTeacher = (fd) => {
+  const errs = {};
+  if (!fd.firstName.trim()) errs.firstName = "First name is required.";
+  if (!fd.lastName.trim()) errs.lastName = "Last name is required.";
+  if (!fd.email.trim()) {
+    errs.email = "Email is required.";
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fd.email)) {
+    errs.email = "Enter a valid email address.";
+  }
+  if (!fd.password) errs.password = "Password is required.";
+  if (!fd.birth_date) errs.birth_date = "Date of birth is required.";
+  if (!fd.gender) errs.gender = "Please select a gender.";
+  if (!fd.nationality) errs.nationality = "Nationality is required.";
+  if (!fd.address?.trim()) errs.address = "Address is required.";
+  if (!fd.speciality?.trim()) errs.speciality = "Speciality is required.";
+  if (!fd.phone) errs.phone = "Phone number is required.";
+  fd.assignments.forEach((a, i) => {
+    if (!a.grade_section.grade || !a.grade_section.section)
+      errs[`assignment_${i}_section`] =
+        `Assignment ${i + 1}: select a grade and section.`;
+    else if (a.subjects.length === 0)
+      errs[`assignment_${i}_subjects`] =
+        `Assignment ${i + 1}: select at least one subject.`;
+  });
+  const combos = fd.assignments.map(
+    (a) => `${a.grade_section.grade}-${a.grade_section.section}`,
+  );
+  if (combos.length !== new Set(combos).size)
+    errs.assignments_dup = "Duplicate grade-section assignments.";
+  return errs;
+};
 
 const emptyForm = {
   firstName: "",
@@ -24,6 +62,7 @@ const emptyForm = {
   gender: "",
   address: "",
   nationality: "",
+  phoneDialCode: "+1",
   phone: "",
   speciality: "",
   assignments: [{ subjects: [], grade_section: { grade: "", section: "" } }],
@@ -34,8 +73,12 @@ const TeacherAdmin = () => {
   const [gradeSections, setGradeSections] = useState([]);
   const [editingTeacher, setEditingTeacher] = useState(null);
   const [formData, setFormData] = useState(emptyForm);
+  const [formKey, setFormKey] = useState(0); // increments on reset to remount PhoneInput
+  const [viewingTeacher, setViewingTeacher] = useState(null);
   const formCardRef = useRef(null);
   const [showPwd, setShowPwd] = useState(false);
+
+  const { countries, isLoading: loadingCountries } = useCountries();
 
   // ── Filters ────────────────────────────────────────────────
   const [filterFirstName, setFilterFirstName] = useState("");
@@ -162,6 +205,7 @@ const TeacherAdmin = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    clearFieldError(name);
   };
 
   const handleGradeSectionChange = (idx, field, value) => {
@@ -239,43 +283,34 @@ const TeacherAdmin = () => {
       assignments: formData.assignments.filter((_, i) => i !== idx),
     });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    for (let i = 0; i < formData.assignments.length; i++) {
-      const a = formData.assignments[i];
-      if (!a.grade_section.grade || !a.grade_section.section) {
-        alert(`Please select grade and section for assignment ${i + 1}`);
-        return;
-      }
-      if (a.subjects.length === 0) {
-        alert(`Please select at least one subject for assignment ${i + 1}`);
-        return;
-      }
-    }
-    const combos = formData.assignments.map(
-      (a) => `${a.grade_section.grade}-${a.grade_section.section}`,
-    );
-    if (combos.length !== new Set(combos).size) {
-      alert("Duplicate grade-section assignments.");
-      return;
-    }
-
+  // ── Submit logic (validation now via useFormErrors) ─────────────
+  const doSubmit = async (fd) => {
+    // Serialize phone to '+dialCode digits' format
+    const phone = fd.phone ? `${fd.phoneDialCode || "+1"} ${fd.phone}` : "";
+    const payload = Object.assign({}, fd, { phone, phoneDialCode: undefined });
     try {
       if (editingTeacher) {
         await updateData(
           userService.updateTeacher,
           editingTeacher.email,
-          formData,
+          payload,
         );
       } else {
-        await postData(userService.createTeacher, formData);
+        await postData(userService.createTeacher, payload);
       }
       resetForm();
+      setFormKey((k) => k + 1); // remount PhoneInput; clear its internal touched state
+      clearErrors(); // clear submit-time validation errors
       refetch();
     } catch (err) {
       alert("Error: " + err.message);
     }
   };
+
+  const { errors, trySubmit, clearFieldError, clearErrors } = useFormErrors(
+    validateTeacher,
+    doSubmit,
+  );
 
   const handleDelete = async (email) => {
     if (!window.confirm("Delete this teacher?")) return;
@@ -309,33 +344,39 @@ const TeacherAdmin = () => {
             ? `Editing ${editingTeacher.firstName} ${editingTeacher.lastName}`
             : "Add Teacher"}
         </h3>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={(e) => trySubmit(e, formData)} noValidate>
           <div className="upanel-row">
-            <FormInput
-              name="firstName"
-              label="First Name"
-              value={formData.firstName}
-              onChange={handleChange}
-              required
-            />
-            <FormInput
-              name="lastName"
-              label="Last Name"
-              value={formData.lastName}
-              onChange={handleChange}
-              required
-            />
+            <div className={errors.firstName ? "field-has-error" : ""}>
+              <FormInput
+                name="firstName"
+                label="First Name"
+                value={formData.firstName}
+                onChange={handleChange}
+              />
+              <FieldError message={errors.firstName} />
+            </div>
+            <div className={errors.lastName ? "field-has-error" : ""}>
+              <FormInput
+                name="lastName"
+                label="Last Name"
+                value={formData.lastName}
+                onChange={handleChange}
+              />
+              <FieldError message={errors.lastName} />
+            </div>
           </div>
           <div className="upanel-row">
-            <FormInput
-              name="email"
-              label="Email"
-              value={formData.email}
-              onChange={handleChange}
-              type="email"
-              required
-              disabled={!!editingTeacher}
-            />
+            <div className={errors.email ? "field-has-error" : ""}>
+              <FormInput
+                name="email"
+                label="Email"
+                value={formData.email}
+                onChange={handleChange}
+                type="email"
+                disabled={!!editingTeacher}
+              />
+              <FieldError message={errors.email} />
+            </div>
             <div className="upanel-field">
               <label className="upanel-label">
                 Password{editingTeacher ? " (leave blank to keep)" : " *"}
@@ -411,62 +452,101 @@ const TeacherAdmin = () => {
                   )}
                 </button>
               </div>
+              <FieldError message={errors.password} />
             </div>
           </div>
           <div className="upanel-row">
-            <FormInput
-              name="birth_date"
-              label="Date of Birth"
-              value={formData.birth_date}
-              onChange={handleChange}
-              type="date"
-              required
-            />
-            <FormInput
-              name="nationality"
-              label="Nationality"
-              value={formData.nationality}
-              onChange={handleChange}
-              required
-            />
+            <div className={errors.birth_date ? "field-has-error" : ""}>
+              <FormInput
+                name="birth_date"
+                label="Date of Birth"
+                value={formData.birth_date}
+                onChange={handleChange}
+                type="date"
+                required
+              />
+              <FieldError message={errors.birth_date} />
+            </div>
+            <div
+              className={
+                errors.nationality
+                  ? "upanel-field field-has-error"
+                  : "upanel-field"
+              }
+            >
+              <label className="upanel-label">Nationality *</label>
+              <select
+                name="nationality"
+                className="upanel-input"
+                value={formData.nationality}
+                onChange={handleChange}
+              >
+                <option value="">Select nationality…</option>
+                {!loadingCountries &&
+                  countries.map((c) => (
+                    <option key={c.code} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+              </select>
+              <FieldError message={errors.nationality} />
+            </div>
           </div>
           <div className="upanel-row">
-            <div>
-              <label>Gender</label>
+            <div
+              className={
+                errors.gender ? "upanel-field field-has-error" : "upanel-field"
+              }
+            >
+              <label className="upanel-label">Gender *</label>
               <select
                 name="gender"
+                className="upanel-input"
                 value={formData.gender}
                 onChange={handleChange}
-                required
               >
                 <option value="">Select</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
               </select>
+              <FieldError message={errors.gender} />
             </div>
-            <FormInput
-              name="address"
-              label="Address"
-              value={formData.address}
-              onChange={handleChange}
-              required
-            />
+            <div className={errors.address ? "field-has-error" : ""}>
+              <FormInput
+                name="address"
+                label="Address"
+                value={formData.address}
+                onChange={handleChange}
+                required
+              />
+              <FieldError message={errors.address} />
+            </div>
           </div>
           <div className="upanel-row">
-            <FormInput
-              name="phone"
-              label="Phone"
-              value={formData.phone}
-              onChange={handleChange}
-              required
-            />
-            <FormInput
-              name="speciality"
-              label="Speciality"
-              value={formData.speciality}
-              onChange={handleChange}
-              required
-            />
+            <div>
+              <PhoneInput
+                key={`teacher-phone-${formKey}`}
+                label="Phone"
+                dialCode={formData.phoneDialCode}
+                phone={formData.phone}
+                onChange={({ dialCode, phone }) =>
+                  setFormData((p) => ({ ...p, phoneDialCode: dialCode, phone }))
+                }
+                required
+                id="teacher-phone"
+              />
+              <FieldError message={errors.phone} />
+            </div>
+            <div className={errors.speciality ? "field-has-error" : ""}>
+              <FormInput
+                name="speciality"
+                label="Speciality"
+                value={formData.speciality}
+                onChange={handleChange}
+                required
+              />
+              <FieldError message={errors.speciality} />
+            </div>
           </div>
 
           <p className="upanel-section-label">Subject Assignments</p>
@@ -487,14 +567,17 @@ const TeacherAdmin = () => {
                 )}
               </div>
               <div className="upanel-row">
-                <div>
-                  <label>Grade</label>
+                <div
+                  className={
+                    errors[`assignment_${idx}_section`] ? "field-has-error" : ""
+                  }
+                >
+                  <label>Grade *</label>
                   <select
                     value={assignment.grade_section.grade}
                     onChange={(e) =>
                       handleGradeSectionChange(idx, "grade", e.target.value)
                     }
-                    required
                   >
                     <option value="">Select grade</option>
                     {getAvailableGrades(idx).map((g) => (
@@ -504,14 +587,17 @@ const TeacherAdmin = () => {
                     ))}
                   </select>
                 </div>
-                <div>
-                  <label>Section</label>
+                <div
+                  className={
+                    errors[`assignment_${idx}_section`] ? "field-has-error" : ""
+                  }
+                >
+                  <label>Section *</label>
                   <select
                     value={assignment.grade_section.section}
                     onChange={(e) =>
                       handleGradeSectionChange(idx, "section", e.target.value)
                     }
-                    required
                     disabled={!assignment.grade_section.grade}
                   >
                     <option value="">Select section</option>
@@ -524,11 +610,18 @@ const TeacherAdmin = () => {
                       </option>
                     ))}
                   </select>
+                  <FieldError message={errors[`assignment_${idx}_section`]} />
                 </div>
               </div>
               {assignment.grade_section.grade &&
                 assignment.grade_section.section && (
-                  <div className="upanel-field">
+                  <div
+                    className={
+                      errors[`assignment_${idx}_subjects`]
+                        ? "upanel-field field-has-error"
+                        : "upanel-field"
+                    }
+                  >
                     <label className="upanel-label">Subjects *</label>
                     <div className="apanel-checkboxes">
                       {getSubjectsForAssignment(idx).map((sub) => (
@@ -543,6 +636,9 @@ const TeacherAdmin = () => {
                         </label>
                       ))}
                     </div>
+                    <FieldError
+                      message={errors[`assignment_${idx}_subjects`]}
+                    />
                   </div>
                 )}
             </div>
@@ -714,6 +810,12 @@ const TeacherAdmin = () => {
               </div>
               <div className="upanel-item-actions">
                 <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setViewingTeacher(t)}
+                >
+                  View
+                </button>
+                <button
                   className="btn btn-info btn-sm"
                   onClick={() => handleEdit(t)}
                 >
@@ -730,6 +832,13 @@ const TeacherAdmin = () => {
           ))}
         </ul>
       </div>
+      {viewingTeacher && (
+        <UserInfoModal
+          user={viewingTeacher}
+          type="teacher"
+          onClose={() => setViewingTeacher(null)}
+        />
+      )}
     </div>
   );
 };

@@ -325,3 +325,54 @@ export const deleteAcademicPlace = async (id) => {
     return { message: "Place deleted" };
   }
 };
+
+/**
+ * Cancel all reservations that belong to a specific place.
+ * Called automatically when a place is marked unavailable.
+ * Sets status = "cancelled" instead of hard-deleting so records are preserved.
+ * @param {string} placeId
+ * @returns {{ cancelled: number }} Count of cancelled reservations
+ */
+export const cancelReservationsForPlace = (placeId) => {
+  const reservations = storageService.getItem(STORAGE_KEYS.RESERVATIONS) || [];
+  let cancelled = 0;
+  const updated = reservations.map((r) => {
+    const rid = r.place?._id || r.place;
+    if (rid === placeId && r.status !== "cancelled") {
+      cancelled++;
+      return {
+        ...r,
+        status: "cancelled",
+        cancelReason: "Place disabled by admin",
+      };
+    }
+    return r;
+  });
+  storageService.setItem(STORAGE_KEYS.RESERVATIONS, updated);
+  return { cancelled };
+};
+
+/**
+ * Restore reservations that were system-cancelled when a place was disabled.
+ * Only restores records with cancelReason === "Place disabled by admin".
+ * @param {string} placeId
+ * @returns {{ restored: number }} Count of restored reservations
+ */
+export const restoreReservationsForPlace = (placeId) => {
+  const reservations = storageService.getItem(STORAGE_KEYS.RESERVATIONS) || [];
+  let restored = 0;
+  const updated = reservations.map((r) => {
+    const rid = r.place?._id || r.place;
+    if (
+      rid === placeId &&
+      r.status === "cancelled" &&
+      r.cancelReason === "Place disabled by admin"
+    ) {
+      restored++;
+      return { ...r, status: "active", cancelReason: undefined };
+    }
+    return r;
+  });
+  storageService.setItem(STORAGE_KEYS.RESERVATIONS, updated);
+  return { restored };
+};
