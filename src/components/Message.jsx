@@ -1,31 +1,53 @@
-import React from "react";
-import '../assets/News.css'; // Importing CSS
+/**
+ * Message — News article card (Admin view).
+ * canEdit prop: true=admin (shows Edit/Delete), false=teacher (create-only).
+ * Clickable body opens full-screen detail.
+ */
+import "../assets/News.css";
 
-const Message = ({ message, onDelete, setEditingNews }) => {
-  const handleEditClick = () => {
-    // Set the editing state to pass the selected message to FormNews for editing
-    setEditingNews(message);
-  };
-
-  const handleDelete = () => {
-    onDelete(message.usuario.email, message.titulo); // Call delete handler
-  };
-
+const Message = ({
+  message,
+  onDelete,
+  setEditingNews,
+  onOpenDetail,
+  canEdit,
+}) => {
   return (
-    <div className="news-item">
-      <h2>{message.titulo}</h2>
-      <p>{message.contenido}</p>
-      <p>
-        Atte: {message.usuario.nombre} {message.usuario.apellido}
-      </p>
-      <div className="buttons">
-        <button className="edit-button" onClick={handleEditClick}>
-          Editar
-        </button>
-        <button className="delete-button" onClick={handleDelete}>
-          Eliminar
-        </button>
+    <div className="news-card">
+      {message.image && (
+        <img
+          src={message.image}
+          alt={message.title}
+          className="news-card-img"
+        />
+      )}
+      <div
+        className="news-card-body news-card-clickable"
+        onClick={() => onOpenDetail?.(message)}
+        title="Click to read full article"
+      >
+        <h3 className="news-card-title">{message.title}</h3>
+        <p className="news-card-content">{message.content}</p>
+        <p className="news-card-author">
+          By {message.user?.firstName} {message.user?.lastName}
+        </p>
       </div>
+      {canEdit && (
+        <div className="news-card-actions">
+          <button
+            className="btn btn-info btn-sm"
+            onClick={() => setEditingNews(message)}
+          >
+            Edit
+          </button>
+          <button
+            className="btn btn-danger btn-sm"
+            onClick={() => onDelete(message.user?.email, message.title)}
+          >
+            Delete
+          </button>
+        </div>
+      )}
     </div>
   );
 };

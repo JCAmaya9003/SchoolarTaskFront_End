@@ -9,7 +9,6 @@ const FormInput = ({
 }) => {
 
   let Component;
-  //para crear el apartado de noticias y eventos, esta condición será importante
   if (as === "textarea") {
     Component = "textarea";
   } else {

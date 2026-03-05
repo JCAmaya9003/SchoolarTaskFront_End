@@ -1,40 +1,42 @@
+/**
+ * UsePost Hook
+ *
+ * Custom hook for creating/posting data.
+ * Works with service layer functions.
+ */
+
 import { useCallback, useState } from "react";
 
+/**
+ * Custom hook for POST operations via service functions
+ *
+ * @returns {Object} { postData, error, isLoading }
+ */
 const usePost = () => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const postData = useCallback(
-    async (url, data) => {
-      setIsLoading(true);
-      setError(null);
+  /**
+   * Execute a POST operation via service function
+   * @param {Function} serviceFn - Service function to call
+   * @param {Object} data - Data to pass to the service function
+   */
+  const postData = useCallback(async (serviceFn, data) => {
+    setIsLoading(true);
+    setError(null);
 
-      try {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-          credentials: "include",
-        });
-
-        if (!response.ok) {
-          const errorDetails = await response.json().catch(() => null);
-          throw new Error(errorDetails?.message || `HTTP error! status: ${response.status}`);
-        }
-
-        const text = await response.text();
-        return text ? JSON.parse(text) : null;
-      } catch (error) {
-        setError(error instanceof Error ? error : new Error('An unknown error occurred'));
-        throw error;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    []
-  );
+    try {
+      const result = await serviceFn(data);
+      return result;
+    } catch (err) {
+      const error =
+        err instanceof Error ? err : new Error("An unknown error occurred");
+      setError(error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   return { postData, error, isLoading };
 };

@@ -1,13 +1,33 @@
-import React from "react";
+/**
+ * ShowMessage — Single news card (read-only, public view).
+ * Clickable to open full-screen article detail.
+ */
+import "../assets/News.css";
 
-const ShowMessage = ({ message }) => {
+const ShowMessage = ({ message, onOpenDetail }) => {
   return (
-    <div>
-      <h2>{message.titulo || "No Title"}</h2>
-      <p>{message.contenido || "No Content"}</p>
-      <p>
-        Atte: {message.usuario?.nombre || "Anonymous"} {message.usuario?.apellido || ""}
-      </p>
+    <div
+      className="news-card news-card-clickable"
+      onClick={() => onOpenDetail?.(message)}
+      title="Click to read full article"
+    >
+      {message.image && (
+        <img
+          src={message.image}
+          alt={message.title}
+          className="news-card-img"
+        />
+      )}
+      <div className="news-card-body">
+        <h3 className="news-card-title">{message.title}</h3>
+        <p className="news-card-content">{message.content}</p>
+        <p className="news-card-author">
+          By {message.user?.firstName} {message.user?.lastName}
+          {message.date && (
+            <span> · {new Date(message.date).toLocaleDateString()}</span>
+          )}
+        </p>
+      </div>
     </div>
   );
 };

@@ -1,0 +1,180 @@
+/* ============================================================
+   ParentPickerModal.css — Searchable parent picker overlay
+   ============================================================ */
+
+/* Backdrop */
+.ppm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  animation: ppm-fade-in .18s ease;
+}
+@keyframes ppm-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Modal card */
+.ppm-modal {
+  background: #fff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,.2);
+  animation: ppm-slide-in .2s cubic-bezier(.16,1,.3,1);
+}
+@keyframes ppm-slide-in {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* Header */
+.ppm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+.ppm-title {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-text-heading);
+  margin: 0;
+}
+.ppm-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  transition: color .15s;
+}
+.ppm-close:hover { color: var(--color-danger); }
+
+/* Filter bar */
+.ppm-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-end;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+.ppm-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1 1 100px;
+  min-width: 90px;
+}
+.ppm-filter-group--wide {
+  flex: 2 1 160px;
+}
+.ppm-filter-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.ppm-filter-input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-family: var(--font-sans);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color .15s;
+}
+.ppm-filter-input:focus { border-color: var(--color-primary); }
+.ppm-clear-btn {
+  background: none;
+  border: 1px solid var(--color-danger-border);
+  color: var(--color-danger-text);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  padding: 7px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  align-self: flex-end;
+  transition: background .15s;
+}
+.ppm-clear-btn:hover { background: var(--color-danger-bg); }
+.ppm-hint {
+  text-align: center;
+  color: var(--color-text-faint);
+  font-size: var(--text-xs);
+  padding: 8px 20px 0;
+}
+
+/* Scrollable list */
+.ppm-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+.ppm-empty {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--text-base);
+  padding: 32px 20px;
+}
+
+/* Parent row */
+.ppm-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--color-border);
+  gap: 12px;
+  transition: background .12s;
+}
+.ppm-row:hover { background: var(--color-surface-hover); }
+.ppm-row:last-child { border-bottom: none; }
+
+.ppm-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ppm-row-name {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text);
+}
+.ppm-row-email {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ppm-select-btn { flex-shrink: 0; }
+
+/* Footer */
+.ppm-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}

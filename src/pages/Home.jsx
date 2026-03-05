@@ -1,28 +1,35 @@
-import React, { useEffect, useState, useContext } from "react";
-import { config } from "../utils/ConfigUtils";
+/**
+ * Home Page / Dashboard
+ *
+ * Main dashboard that displays role-based navigation and content.
+ * Updated to use authService with dual-mode support.
+ */
+
+import { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import News from "./News";
 import ShowNews from "./ShowNews";
-import '../assets/home.css';
-import {jwtDecode} from "jwt-decode"
+import "../assets/home.css";
 import AdminDashboard from "./AdminDashboard";
 import ReservationAdmin from "../components/ReservationAdmin";
-
+import EvaluationAdmin from "../components/EvaluationAdmin";
+import SubjectAdmin from "../components/SubjectAdmin";
+import GradeSectionAdmin from "../components/GradeSectionAdmin";
 
 const Home = () => {
- 
   const navigate = useNavigate();
+  const {
+    user,
+    role,
+    isLoading: authLoading,
+    clearAuth,
+  } = useContext(AuthContext);
 
-  const [permissions, setPermissions] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [currentSection, setCurrentSection] = useState("show-News");
-  const [error, setError] = useState(null);
-  const { clearAuth } = useContext(AuthContext);
+  const [currentSection, setCurrentSection] = useState("show-news");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-
+  /* PRESERVED FOR FUTURE USE - Backend token validation:
   const handleTokenExpiration = () => {
     setIsAuthenticated(false);
     setPermissions(null);
@@ -31,10 +38,8 @@ const Home = () => {
   };
 
   useEffect(() => {
-    
     const checkAuthAndFetchPermissions = async () => {
       try {
-       
         const tokenValidationResponse = await fetch(`${config.backUrl}/api/users/validate-token`, {
           method: "GET",
           credentials: "include",
@@ -45,8 +50,6 @@ const Home = () => {
 
         if (tokenValidationResponse.ok) {
           setIsAuthenticated(true);
-
-          
           const roleResponse = await fetch(`${config.backUrl}/api/users/get-role`, {
             method: "GET",
             credentials: "include",
@@ -56,9 +59,7 @@ const Home = () => {
           });
           const roleData = await roleResponse.json();
           if (roleResponse.ok) {
-            console.log(roleData);
             setPermissions(roleData);
-            console.log(permissions);
           } else {
             if (roleResponse.status === 401) {
               handleTokenExpiration();
@@ -90,48 +91,70 @@ const Home = () => {
     };
 
     checkAuthAndFetchPermissions();
-  }, [URL, navigate]);
+  }, [navigate]);
+  */
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/");
+    }
+  }, [authLoading, user, navigate]);
 
   // Logout function
   const onLogout = () => {
+    /* PRESERVED FOR FUTURE USE:
     document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    setIsAuthenticated(false);
-    setPermissions(null);
+    */
     clearAuth();
     navigate("/");
   };
 
   // Render navigation links based on permissions
   const renderNavLinks = () => {
-    if (!permissions) return null;
-
-    const role = permissions.admin ? 'admin' : 
-                 permissions.teacher ? 'teacher' : 
-                 permissions.parent ? 'parent' : 
-                 permissions.student ? 'student' : '';
+    if (!role) return null;
 
     const links = [];
 
-    if (permissions.admin) {
-
+    if (role.admin) {
       links.push(
-        { href: "#show-news", text: "Noticias" },
-        { href: "#news", text: "Gestionar Noticias" },
-        { href: "#manageUsers", text: "Gestionar Usuarios" },
+        { href: "#show-news", text: "News" },
+        { href: "#news", text: "Manage News" },
+        { href: "#manageUsers", text: "Manage Users" },
+        { href: "#manage-grades", text: "Manage Grades" },
+        { href: "#manage-subjects", text: "Manage Subjects" },
+        { href: "#manage-grade-sections", text: "Grade Sections" },
+        { href: "#reservations", text: "Reservations" },
       );
-      
-    } else if (permissions.teacher) {
+    } else if (role.teacher) {
       links.push(
-        { href: "#show-news", text: "Noticias" },
-        { href: "#manage-grades", text: "Gestionar Notas" },
-        { href: "#reservations", text: "Reservas" }
+        { href: "#show-news", text: "News" },
+        { href: "#news", text: "Manage News" },
+        { href: "#manage-grades", text: "Manage Grades" },
+        { href: "#reservations", text: "Reservations" },
       );
-    } else if (permissions.parent || permissions.student) {
+    } else if (role.parent) {
       links.push(
-        { href: "#show-news", text: "Noticias" },
-        { href: "#notes", text: "Notas Hijos" }
+        { href: "#show-news", text: "News" },
+        { href: "#notes", text: "My Grades" },
+      );
+    } else if (role.student) {
+      links.push(
+        { href: "#show-news", text: "News" },
+        { href: "#notes", text: "My Grades" },
+        { href: "#reservations", text: "Reservations" },
       );
     }
+
+    const roleClass = role.admin
+      ? "admin"
+      : role.teacher
+        ? "teacher"
+        : role.parent
+          ? "parent"
+          : role.student
+            ? "student"
+            : "";
 
     return links.map((link, index) => (
       <a
@@ -142,8 +165,10 @@ const Home = () => {
           setCurrentSection(link.href.slice(1));
           setIsMobileMenuOpen(false);
         }}
-        data-role={role}
-        aria-current={currentSection === link.href.slice(1) ? "page" : undefined}
+        data-role={roleClass}
+        aria-current={
+          currentSection === link.href.slice(1) ? "page" : undefined
+        }
       >
         {link.text}
       </a>
@@ -155,87 +180,91 @@ const Home = () => {
     switch (currentSection) {
       case "news":
         return (
-          <div>   
-            <h2> Gestion de Noticias</h2>
-          
-            <News/>
-
+          <div>
+            <h2>News Management</h2>
+            <News />
           </div>
         );
       case "show-news":
         return (
           <div>
-            <h2>Mostrar Noticias</h2>
-            <ShowNews/>
+            <h2>News</h2>
+            <ShowNews />
           </div>
         );
       case "notes":
         return (
           <div>
-            <img src="/path/to/notes-image.png" alt="Notes Section" />
-            <h2>Notas</h2>
-            <p>Contenido de notas.</p>
-            
+            <EvaluationAdmin />
           </div>
         );
       case "manageUsers":
         return (
           <div>
-            <h2>Gestionar Usuarios</h2>
-            <AdminDashboard/>
-            
+            <h2>Manage Users</h2>
+            <AdminDashboard />
           </div>
         );
       case "manageNews":
         return (
           <div>
-            <h2>Gestionar Noticias</h2>
-            <p>Contenido para gestionar noticias.</p>
+            <h2>Manage News</h2>
+            <p>Content for managing news.</p>
           </div>
         );
-      case "manageGrades":
+      case "manage-grades":
         return (
           <div>
-            <h2>Gestionar Notas</h2>
-            <p>Contenido para gestionar notas.</p>
+            <h2>Manage Grades</h2>
+            <EvaluationAdmin />
+          </div>
+        );
+      case "manage-subjects":
+        return (
+          <div>
+            <h2>Manage Subjects</h2>
+            <SubjectAdmin />
+          </div>
+        );
+      case "manage-grade-sections":
+        return (
+          <div>
+            <h2>Manage Grade Sections</h2>
+            <GradeSectionAdmin />
           </div>
         );
       case "reservations":
         return (
           <div>
-            <h2>Reservas</h2>
+            <h2>Reservations</h2>
             <ReservationAdmin />
           </div>
         );
       default:
-        return <div>Selecciona una opción del menú.</div>;
+        return <div>Select an option from the menu.</div>;
     }
   };
 
-  if (loading) {
+  if (authLoading) {
     return <div>Loading...</div>;
   }
 
-  if (error) {
-    return <div className="error-message">{error}</div>;
-  }
-
-  if (!isAuthenticated) {
+  if (!user) {
     return <div>Please log in.</div>;
   }
 
   return (
     <div className="container">
       <header className="header">
-        <div className="school-name">Nombre del colegio</div>
-        <nav className={`nav ${isMobileMenuOpen ? 'active' : ''}`}>
+        <div className="school-name">School Name</div>
+        <nav className={`nav ${isMobileMenuOpen ? "active" : ""}`}>
           {renderNavLinks()}
           <button onClick={onLogout} className="logout-button mobile-logout">
             Logout
           </button>
         </nav>
         <button
-          className={`hamburger ${isMobileMenuOpen ? 'active' : ''}`}
+          className={`hamburger ${isMobileMenuOpen ? "active" : ""}`}
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
           <span></span>
@@ -253,6 +282,3 @@ const Home = () => {
 };
 
 export default Home;
-
-
-

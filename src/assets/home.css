@@ -1,220 +1,186 @@
-/* General styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* ============================================================
+   home.css
+   App shell: .container > .header + .content
+   KEY: .container uses height:100vh directly — no CSS chain
+   dependency on React wrappers.
+   ============================================================ */
 
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background-color: #f4f4f4;
-}
-
+/* ── App shell ──────────────────────────────────────────────── */
 .container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--color-bg);
 }
 
-/* Header Styles */
+/* ── Topbar — exactly 56px, never resizes ───────────────────── */
 .header {
-  background-color: #000;
-  color: white;
+  flex: 0 0 var(--topbar-height);
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 10px 20px;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  padding: 0 var(--space-9);
+  background: var(--color-primary);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: var(--z-topbar);
+  overflow: hidden;
 }
 
+/* Institutional name / logo */
 .school-name {
-  font-size: 18px;
-  font-weight: bold;
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: -0.1px;
 }
 
+/* ── Navigation links ───────────────────────────────────────── */
 .nav {
   display: flex;
-  gap: 15px;
+  align-items: center;
+  gap: var(--space-1);
+  flex: 1;
+  justify-content: flex-end;
+  padding-right: var(--space-5);
+  overflow: hidden;
 }
 
 .nav a {
-  color: white;
-  text-decoration: none;
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 4px;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  display: inline-block;
+  padding: 5px var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+  white-space: nowrap;
+  transition: background var(--transition-base), color var(--transition-base);
 }
+.nav a:hover                        { background: rgba(255, 255, 255, 0.10); color: #fff; }
+.nav a[aria-current="page"]         { background: rgba(255, 255, 255, 0.16); color: #fff; font-weight: 600; }
 
-.nav a:hover,
-.nav a[aria-current="page"] {
-  background-color: rgba(255, 255, 255, 0.2);
-  text-decoration: none;
-}
+/* ── Role accent colors ─────────────────────────────────────── */
+.nav a[data-role="admin"]                       { color: #FCD34D; }
+.nav a[data-role="admin"]:hover,
+.nav a[data-role="admin"][aria-current="page"]  { color: var(--color-accent); background: rgba(245, 158, 11, 0.15); }
 
-/* Role-specific styles */
-.nav a[data-role="admin"] {
-  color: #dae01b;
-}
+.nav a[data-role="teacher"]                      { color: #6EE7B7; }
+.nav a[data-role="teacher"]:hover,
+.nav a[data-role="teacher"][aria-current="page"] { color: var(--color-success); background: rgba(16, 185, 129, 0.15); }
 
-.nav a[data-role="teacher"] {
-  color: #4caf50;
-}
+.nav a[data-role="student"]                      { color: #BAE6FD; }
+.nav a[data-role="student"]:hover,
+.nav a[data-role="student"][aria-current="page"] { color: var(--color-info); background: rgba(14, 165, 233, 0.15); }
 
-.nav a[data-role="parent"],
-.nav a[data-role="student"] {
-  color: #2196f3;
-}
+.nav a[data-role="parent"]                       { color: #DDD6FE; }
+.nav a[data-role="parent"]:hover,
+.nav a[data-role="parent"][aria-current="page"]  { color: #8B5CF6; background: rgba(139, 92, 246, 0.15); }
 
+/* ── Logout button ──────────────────────────────────────────── */
 .logout-button {
-  background-color: transparent;
-  color: white;
-  border: 1px solid white;
-  padding: 5px 10px;
+  flex-shrink: 0;
+  height: 30px;
+  padding: 0 var(--space-5);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  border-radius: var(--radius-md);
+  color: rgba(255, 255, 255, 0.75);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 600;
   cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition:
+    background var(--transition-base),
+    color var(--transition-base),
+    border-color var(--transition-base);
 }
-
 .logout-button:hover {
-  background-color: white;
-  color: black;
+  background: rgba(255, 255, 255, 0.10);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.50);
 }
 
-/* Hamburger menu */
+.mobile-logout  { display: none; }
+.desktop-logout { display: inline-flex; align-items: center; }
+
+/* ── Hamburger — mobile only ────────────────────────────────── */
 .hamburger {
   display: none;
   flex-direction: column;
-  justify-content: space-around;
-  width: 2rem;
-  height: 2rem;
+  justify-content: center;
+  gap: 5px;
+  width: 32px;
+  height: 32px;
+  padding: 2px;
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 0;
-  z-index: 10;
+  flex-shrink: 0;
 }
-
 .hamburger span {
-  width: 2rem;
-  height: 0.25rem;
-  background: white;
-  border-radius: 10px;
-  transition: all 0.3s linear;
-  position: relative;
-  transform-origin: 1px;
+  display: block;
+  width: 20px;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.85);
+  transform-origin: center;
+  transition: transform var(--transition-medium), opacity var(--transition-medium);
 }
+.hamburger.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.active span:nth-child(2) { opacity: 0; }
+.hamburger.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-/* Main content styles */
+/* ── Main scrollable content area ──────────────────────────── */
 .content {
-  flex: 1; /* Allow the content to expand to fill the available space */
-  padding: 20px;
-  overflow-y: scroll; 
-  overflow-x: hidden; 
-  max-height: calc(100vh - 80px);
-  align-self: center;
+  flex: 1 1 0;
+  min-height: 0;       /* critical: allows flex child to shrink + scroll */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--space-11) var(--space-12);
 }
 
-/* Center titles */
-.content h2 {
-  text-align: center; /* Center the text */
-  font-size: 2rem;    /* Adjust font size if needed */
-  margin-bottom: 20px; /* Add spacing below the title */
-          /* Ensure a consistent color for titles */
+/* Section headings rendered by renderContent */
+.content > div > h2 {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text-heading);
+  margin: 0 0 var(--space-8);
 }
 
-
-/* Mobile logout button */
-.mobile-logout {
-  display: none;
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .header  { padding: 0 var(--space-6); }
+  .content { padding: var(--space-8) var(--space-7); }
 }
 
-/* Responsive layout */
-@media (max-width: 768px) {
-  .header {
-    flex-wrap: nowrap;
-  }
+@media (max-width: 640px) {
+  .hamburger      { display: flex; }
+  .desktop-logout { display: none; }
+  .mobile-logout  { display: block; margin-top: var(--space-7); }
 
-  .hamburger {
-    display: flex;
-  }
-
+  /* Slide-in full-screen nav drawer */
   .nav {
     position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 100%;
-    background-color: #000;
+    inset: 0;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    gap: var(--space-2);
+    padding-right: 0;
+    background: var(--color-primary);
     transform: translateX(-100%);
-    transition: transform 0.3s ease-in-out;
+    transition: transform var(--transition-spring);
+    z-index: var(--z-modal);
+    overflow: visible;
+    flex: none;
   }
+  .nav.active { transform: translateX(0); }
+  .nav a { font-size: var(--text-xl); padding: var(--space-4) var(--space-12); }
 
-  .nav.active {
-    transform: translateX(0);
-  }
-
-  .desktop-logout {
-    display: none;
-  }
-
-  .mobile-logout {
-    display: block;
-    margin-top: 20px;
-  }
-
-  /* Hamburger to X transition */
-  .hamburger.active span:nth-child(1) {
-    transform: rotate(45deg);
-  }
-
-  .hamburger.active span:nth-child(2) {
-    opacity: 0;
-  }
-
-  .hamburger.active span:nth-child(3) {
-    transform: rotate(-45deg);
-  }
-}
-
-/* News section container */
-.news-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-}
-
-.news-item {
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  padding: 15px;
-  max-width: 300px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-}
-
-.news-item img {
-  width: 100%;
-  border-radius: 5px;
-  margin-bottom: 10px;
-}
-
-.news-item h3 {
-  font-size: 18px;
-  margin-bottom: 10px;
-}
-
-.news-item p {
-  font-size: 14px;
-  color: #555;
-}
-body::-webkit-scrollbar {
-  display: none;
+  .content { padding: var(--space-6) var(--space-5); }
+  .content > div > h2 { font-size: var(--text-2xl); }
 }

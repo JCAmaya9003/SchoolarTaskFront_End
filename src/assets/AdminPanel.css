@@ -1,0 +1,232 @@
+/* ============================================================
+   AdminPanel.css
+   Shared styles for SubjectAdmin and GradeSectionAdmin.
+   Classes prefixed with .apanel- for clarity.
+   ============================================================ */
+
+/* ── Page wrapper ───────────────────────────────────────────── */
+.apanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-9);
+  width: 100%;
+}
+
+/* Force inputs to fill their containers */
+.apanel-form-card form > div,
+.apanel-row > div {
+  width: 100%;
+  min-width: 0;
+}
+.apanel-form-card form input,
+.apanel-form-card form select,
+.apanel-form-card form textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── Shared card style ──────────────────────────────────────── */
+.apanel-form-card,
+.apanel-list-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-10);
+  overflow: hidden;
+}
+
+/* ── Card titles ─────────────────────────────────────────────── */
+.apanel-form-title,
+.apanel-list-title {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text-heading);
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-surface-alt);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Count badge */
+.apanel-count {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  background: var(--color-info-bg);
+  color: var(--color-info-text);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+/* ── Form layout inside the card ────────────────────────────── */
+.apanel-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* Override global form card style */
+.apanel-form form,
+.apanel-form-card form {
+  max-width: none;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: none;
+}
+
+/* Side-by-side row */
+.apanel-row {
+  display: flex;
+  gap: var(--space-5);
+}
+.apanel-row > * { flex: 1; }
+
+/* Generic field wrapper */
+.apanel-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Label */
+.apanel-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* Checkbox grid */
+.apanel-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--color-surface-alt);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  max-height: 180px;
+  overflow-y: auto;
+}
+.apanel-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 3px 0;
+}
+.apanel-checkbox {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  accent-color: var(--color-primary);
+}
+
+/* Form actions row */
+.apanel-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+/* ── List items ─────────────────────────────────────────────── */
+.apanel-items {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.apanel-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+.apanel-item:hover { background: var(--color-surface-hover); border-color: var(--color-border-strong); }
+
+.apanel-item-main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  overflow: hidden;
+  flex-wrap: wrap;
+}
+
+/* Grade badge */
+.apanel-item-badge {
+  flex-shrink: 0;
+  display: inline-block;
+  padding: 2px var(--space-3);
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.apanel-item-name {
+  font-weight: 600;
+  font-size: var(--text-base);
+  color: var(--color-text);
+}
+
+.apanel-item-sub {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.apanel-item-actions {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+/* ── States ─────────────────────────────────────────────────── */
+.apanel-loading {
+  font-size: var(--text-base);
+  color: var(--color-text-faint);
+  font-style: italic;
+  padding: var(--space-3) 0;
+}
+.apanel-empty {
+  font-size: var(--text-base);
+  color: var(--color-text-faint);
+  font-style: italic;
+  text-align: center;
+  padding: var(--space-9) 0;
+}
+.apanel-error {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-danger-text);
+  background: var(--color-danger-bg);
+  border-left: 3px solid var(--color-danger);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 7px 11px;
+}

@@ -1,41 +1,57 @@
-import { useCallback, useState } from "react";
+/**
+ * UseFetch Hook
+ *
+ * Custom hook for fetching data.
+ * Works with service layer functions that return promises.
+ *
+ * FIXED: This hook was previously incorrectly named and implemented DELETE functionality.
+ * It now properly implements GET/fetch functionality.
+ */
 
-const useFetch = () => {
+import { useState, useEffect, useCallback } from "react";
+
+/**
+ * Custom hook for fetching data from a service function
+ *
+ * @param {Function} serviceFn - Service function that returns a promise
+ * @returns {Object} { data, error, isLoading, refetch }
+ */
+const useFetch = (serviceFn) => {
+  const [data, setData] = useState(null);
   const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const deleteData = useCallback(
-    async (url, data) => {
-        setIsLoading(true);
-        setError(null);
+  const fetchData = useCallback(async () => {
+    if (!serviceFn) {
+      setIsLoading(false);
+      return;
+    }
 
-        try {
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    "Content-Type": "application/json", // Ensure the content type is set
-                },
-                body: JSON.stringify(data), // Send the data in the body
-                credentials: "include",
-            });
+    setIsLoading(true);
+    setError(null);
 
-            if (!response.ok) {
-                const errorDetails = await response.json().catch(() => null);
-                throw new Error(errorDetails?.message || `HTTP error! status: ${response.status}`);
-            }
+    try {
+      const result = await serviceFn();
+      setData(result);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err : new Error("An unknown error occurred")
+      );
+      console.error("Fetch error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [serviceFn]);
 
-            return await response.json(); // Assuming the response contains some confirmation or data
-        } catch (error) {
-            setError(error instanceof Error ? error : new Error('An unknown error occurred'));
-            throw error;
-        } finally {
-            setIsLoading(false);
-        }
-    },
-    []
-  );
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  return { deleteData, error, isLoading };
+  const refetch = useCallback(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { data, error, isLoading, refetch };
 };
 
 export default useFetch;

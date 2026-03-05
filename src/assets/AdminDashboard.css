@@ -1,55 +1,42 @@
-/* General styles for the admin dashboard */
+/* ============================================================
+   AdminDashboard.css — Tab-based user management layout
+   ============================================================ */
+
 .admin-dashboard {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    padding: 20px;
-    margin: 0 auto;
-    max-width: 1200px;
-  }
-  
-  /* Layout for desktop and tablets */
-  @media (min-width: 768px) {
-    .admin-dashboard {
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-  }
-  
-  /* Styles for each form container */
-  .admin-dashboard .form-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    background-color: #f9f9f9;
-    margin: 10px;
-    max-width: 300px;
-  }
-  
-  .admin-dashboard .form-container h2 {
-    font-size: 18px;
-    color: #333;
-    margin-bottom: 15px;
-  }
-  
-  .admin-dashboard .form-container form {
-    width: 100%;
-  }
-  
-  /* Mobile-specific adjustments */
-  @media (max-width: 768px) {
-    .admin-dashboard {
-      flex-direction: column;
-    }
-  
-    .admin-dashboard .form-container {
-      max-width: 100%;
-    }
-  }
-  
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+/* ── Tab bar ─────────────────────────────────────────────────── */
+.admin-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--color-border);
+  margin-bottom: var(--space-9);
+}
+
+.admin-tab {
+  padding: var(--space-4) var(--space-10);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--transition-base), border-color var(--transition-base);
+}
+.admin-tab:hover { color: var(--color-primary); }
+.admin-tab--active {
+  font-weight: 700;
+  /* color and border-bottom-color are set inline via style prop in JSX */
+}
+
+/* ── Panel (full width) ──────────────────────────────────────── */
+.admin-panel {
+  width: 100%;
+}
